@@ -53,10 +53,7 @@ namespace TechBirdsWebAPI.Controllers
                 }
 
                 var roles = await _userManager.GetRolesAsync(user);
-                if (!roles.Contains("Admin"))
-                {
-                    return BadRequest(new { message = "Access denied. Admin role required." });
-                }
+                
 
                 var jwtSecret = _config["Jwt:Secret"];
                 if (string.IsNullOrEmpty(jwtSecret))
@@ -76,8 +73,7 @@ namespace TechBirdsWebAPI.Controllers
                     Email = user.Email ?? "",
                     Role = roles.FirstOrDefault() ?? "Admin",
                     Bio = user.Bio,
-                    // Profile & Media
-                    Avatar = user.Avatar != null ? Convert.ToBase64String(user.Avatar) : null,
+                    Avatar = user.Avatar.ToBase64String(),
                     Website = user.Website,
                     Twitter = user.Twitter,
                     LinkedIn = user.LinkedIn,
@@ -132,9 +128,7 @@ namespace TechBirdsWebAPI.Controllers
                     FirstName = request.FirstName,
                     LastName = request.LastName,
                     Bio = request.Bio ?? "Administrator",
-                    
-                    // Profile & Media (optional fields from request)
-                    Avatar = string.IsNullOrWhiteSpace(request.Avatar) ? null : Convert.FromBase64String(request.Avatar),
+                    Avatar = string.IsNullOrWhiteSpace(request.Avatar) ? null : request.Avatar.ToByteArray(),
                     Website = request.Website,
                     Twitter = request.Twitter,
                     LinkedIn = request.LinkedIn,
@@ -208,9 +202,7 @@ namespace TechBirdsWebAPI.Controllers
                     Email = user.Email ?? "",
                     Role = roles.FirstOrDefault() ?? "Admin",
                     Bio = user.Bio,
-                    
-                    // Profile & Media
-                    Avatar = user.Avatar != null ? Convert.ToBase64String(user.Avatar) : null,
+                    Avatar = user.Avatar.ToBase64String(),
                     Website = user.Website,
                     Twitter = user.Twitter,
                     LinkedIn = user.LinkedIn,

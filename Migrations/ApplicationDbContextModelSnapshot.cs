@@ -200,9 +200,9 @@ namespace TechBirdsWebApi.Migrations
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("integer");
 
-                    b.Property<string>("Avatar")
+                    b.Property<byte[]>("Avatar")
                         .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
+                        .HasColumnType("bytea");
 
                     b.Property<string>("Bio")
                         .IsRequired()

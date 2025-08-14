@@ -113,7 +113,9 @@ namespace TechBirdsWebAPI.Controllers
                         TotalViews = user.TotalViews,
                         JoinedAt = user.JoinedAt.ToString("yyyy-MM-ddTHH:mm:ssZ"),
                         LastActive = user.LastActive?.ToString("yyyy-MM-ddTHH:mm:ssZ"),
-                        Role = roles.FirstOrDefault() ?? "Subscriber"
+                        Role = roles.FirstOrDefault() ?? "Subscriber",
+                        Username = user.UserName, // Added
+                        Email = user.Email // Added
                     });
                 }
 
@@ -290,7 +292,8 @@ namespace TechBirdsWebAPI.Controllers
                     JoinedAt = user.JoinedAt.ToString("yyyy-MM-ddTHH:mm:ssZ"),
                     LastActive = user.LastActive?.ToString("yyyy-MM-ddTHH:mm:ssZ"),
                     Role = roles.FirstOrDefault() ?? "Subscriber",
-                   
+                    Username = user.UserName, // Added
+                    Email = user.Email // Added
                 };
 
                 return Ok(userProfile);
@@ -732,6 +735,44 @@ namespace TechBirdsWebAPI.Controllers
             }
         }
 
+        // DELETE: api/users/{id} - Delete user (SuperAdmin only)
+        [HttpDelete("{id}")]
+        [Authorize(Roles = "SuperAdmin")]
+        public async Task<IActionResult> DeleteUser(string id)
+        {
+            try
+            {
+                var user = await _userManager.FindByIdAsync(id);
+                if (user == null)
+                {
+                    return NotFound(new { message = "User not found" });
+                }
+
+                var result = await _userManager.DeleteAsync(user);
+                if (!result.Succeeded)
+                {
+                    return BadRequest(new { message = "User deletion failed", errors = result.Errors });
+                }
+
+                // Log user deletion
+                var currentUserId = _userManager.GetUserId(User);
+                await _userActivityService.LogActivityAsync(
+                    currentUserId,
+                    "USER_DELETED",
+                    $"Deleted user: {user.Email}",
+                    new { DeletedUserId = user.Id, Email = user.Email }
+                );
+
+                return Ok(new { message = "User deleted successfully", userId = user.Id });
+            }
+            catch (Exception ex)
+            {
+                var currentUserId = _userManager.GetUserId(User);
+                await _exceptionLogger.LogExceptionAsync(ex, HttpContext, "UsersController.DeleteUser", currentUserId, "UserManagement");
+                return StatusCode(500, new { message = "Error deleting user" });
+            }
+        }
+
         // Helper method to check if role change is a valid self-downgrade
         private static bool IsSelfDowngrade(IList<string> currentRoles, string newRole)
         {
@@ -808,11 +849,12 @@ namespace TechBirdsWebAPI.Controllers
         public string JoinedAt { get; set; } = string.Empty;
         public string? LastActive { get; set; }
         public string Role { get; set; } = string.Empty;
+        public string? Username { get; set; } // Added
+        public string? Email { get; set; } // Added
     }
 
     public class UserDetailedProfile : UserPublicProfile
     {
-        public string? Email { get; set; } // 🔒 Only for authenticated user's own profile
         public List<string> Roles { get; set; } = new(); // ✅ ADDED: All user roles
         public bool IsActive { get; set; } = true; // ✅ ADDED: Account active status
         public List<UserArticleSummary> RecentArticles { get; set; } = new();

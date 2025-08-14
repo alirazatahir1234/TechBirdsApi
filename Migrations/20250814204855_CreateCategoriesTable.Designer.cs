@@ -12,8 +12,8 @@ using TechBirdsWebAPI.Data;
 namespace TechBirdsWebApi.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250810192053_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20250814204855_CreateCategoriesTable")]
+    partial class CreateCategoriesTable
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -203,9 +203,9 @@ namespace TechBirdsWebApi.Migrations
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("integer");
 
-                    b.Property<string>("Avatar")
+                    b.Property<byte[]>("Avatar")
                         .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
+                        .HasColumnType("bytea");
 
                     b.Property<string>("Bio")
                         .IsRequired()

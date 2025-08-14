@@ -9,7 +9,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace TechBirdsWebApi.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class CreateCategoriesTable : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -37,7 +37,7 @@ namespace TechBirdsWebApi.Migrations
                     FirstName = table.Column<string>(type: "text", nullable: false),
                     LastName = table.Column<string>(type: "text", nullable: false),
                     Bio = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: false),
-                    Avatar = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    Avatar = table.Column<byte[]>(type: "bytea", maxLength: 500, nullable: true),
                     Website = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
                     Twitter = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
                     LinkedIn = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
