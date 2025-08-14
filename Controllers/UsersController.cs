@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using TechBirdsWebAPI.Extension;
 using TechBirdsWebAPI.Data;
 using TechBirdsWebAPI.Models;
 using TechBirdsWebAPI.Services;
@@ -103,7 +104,7 @@ namespace TechBirdsWebAPI.Controllers
                         FirstName = user.FirstName,
                         LastName = user.LastName,
                         Bio = user.Bio,
-                        Avatar = user.Avatar,
+                        Avatar = user.Avatar.ToBase64String(), // Convert byte[] to base64 string
                         Website = user.Website,
                         Twitter = user.Twitter,
                         LinkedIn = user.LinkedIn,
@@ -197,7 +198,7 @@ namespace TechBirdsWebAPI.Controllers
                     FirstName = request.FirstName,
                     LastName = request.LastName,
                     Bio = request.Bio ?? "",
-                    Avatar = request.Avatar,
+                    Avatar = string.IsNullOrWhiteSpace(request.Avatar) ? null : request.Avatar.ToByteArray(), // Convert base64 to byte[]
                     Website = request.Website,
                     Twitter = request.Twitter,
                     LinkedIn = request.LinkedIn,
@@ -279,7 +280,7 @@ namespace TechBirdsWebAPI.Controllers
                     FirstName = user.FirstName,
                     LastName = user.LastName,
                     Bio = user.Bio,
-                    Avatar = user.Avatar,
+                    Avatar = user.Avatar.ToBase64String(),
                     Website = user.Website,
                     Twitter = user.Twitter,
                     LinkedIn = user.LinkedIn,
@@ -336,7 +337,7 @@ namespace TechBirdsWebAPI.Controllers
                     LastName = user.LastName,
                     Email = user.Email,
                     Bio = user.Bio,
-                    Avatar = user.Avatar,
+                    Avatar = user.Avatar.ToBase64String(),
                     Website = user.Website,
                     Twitter = user.Twitter,
                     LinkedIn = user.LinkedIn,
@@ -442,7 +443,7 @@ namespace TechBirdsWebAPI.Controllers
                 user.LastName = request.LastName;
                 user.Name = string.IsNullOrEmpty(request.Name) ? $"{request.FirstName} {request.LastName}" : request.Name;
                 user.Bio = request.Bio ?? "";
-                user.Avatar = request.Avatar;
+                user.Avatar = string.IsNullOrWhiteSpace(request.Avatar) ? null : request.Avatar.ToByteArray();
                 user.Website = request.Website;
                 user.Twitter = request.Twitter;
                 user.LinkedIn = request.LinkedIn;
