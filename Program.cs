@@ -156,6 +156,18 @@ app.UseSwaggerUI();
 // Enable HTTPS redirection for production
 app.UseHttpsRedirection();
 
+// Serve static files from wwwroot and uploads directory under content root
+var uploadsPath = Path.Combine(app.Environment.ContentRootPath, "uploads");
+if (!Directory.Exists(uploadsPath))
+{
+    Directory.CreateDirectory(uploadsPath);
+}
+app.UseStaticFiles(new Microsoft.AspNetCore.Builder.StaticFileOptions
+{
+    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(uploadsPath),
+    RequestPath = "/uploads"
+});
+
 // ✅ USE CORS (MUST BE BEFORE UseAuthorization)
 app.UseCors("TechBirdsFrontend");
 

@@ -14,6 +14,7 @@ namespace TechBirdsWebAPI.Data
         public DbSet<Post> Posts { get; set; }
         public DbSet<Category> Categories { get; set; }
         public DbSet<Comment> Comments { get; set; }
+        public DbSet<MediaItem> MediaItems { get; set; }
         
         // 🔐 Logging and Exception Tracking Tables
         public DbSet<UserActivity> UserActivities { get; set; }
@@ -95,6 +96,33 @@ namespace TechBirdsWebAPI.Data
                 entity.HasOne(c => c.Post)
                       .WithMany(p => p.Comments)
                       .HasForeignKey(c => c.PostId);
+            });
+
+            // Configure MediaItem entity
+            builder.Entity<MediaItem>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.FileName).HasMaxLength(255).IsRequired();
+                entity.Property(e => e.OriginalFileName).HasMaxLength(255).IsRequired();
+                entity.Property(e => e.MimeType).HasMaxLength(100).IsRequired();
+                entity.Property(e => e.Url).HasMaxLength(500).IsRequired();
+                entity.Property(e => e.ThumbnailUrl).HasMaxLength(500);
+                entity.Property(e => e.StoragePath).HasMaxLength(1000).IsRequired();
+                entity.Property(e => e.ThumbnailPath).HasMaxLength(1000);
+                entity.Property(e => e.Title).HasMaxLength(255);
+                entity.Property(e => e.AltText).HasMaxLength(500);
+                entity.Property(e => e.Caption).HasMaxLength(1000);
+                entity.Property(e => e.Description).HasMaxLength(2000);
+
+                entity.HasOne(e => e.UploadedBy)
+                      .WithMany()
+                      .HasForeignKey(e => e.UploadedByUserId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                entity.ToTable("media_items");
+                entity.HasIndex(e => e.CreatedAt);
+                entity.HasIndex(e => e.UploadedByUserId);
+                entity.HasIndex(e => e.IsDeleted);
             });
             
             // 🔐 Configure UserActivity entity
