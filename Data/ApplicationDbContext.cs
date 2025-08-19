@@ -14,6 +14,9 @@ namespace TechBirdsWebAPI.Data
         public DbSet<Post> Posts { get; set; }
         public DbSet<Category> Categories { get; set; }
         public DbSet<Comment> Comments { get; set; }
+        public DbSet<MediaItem> MediaItems { get; set; }
+        public DbSet<Page> Pages { get; set; }
+        public DbSet<PageRevision> PageRevisions { get; set; }
         
         // 🔐 Logging and Exception Tracking Tables
         public DbSet<UserActivity> UserActivities { get; set; }
@@ -95,6 +98,89 @@ namespace TechBirdsWebAPI.Data
                 entity.HasOne(c => c.Post)
                       .WithMany(p => p.Comments)
                       .HasForeignKey(c => c.PostId);
+            });
+
+            // Configure Page entity
+            builder.Entity<Page>(entity =>
+            {
+                entity.ToTable("pages");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Title).HasMaxLength(200).IsRequired();
+                entity.Property(e => e.Slug).HasMaxLength(200).IsRequired();
+                entity.HasIndex(e => e.Slug).IsUnique();
+                entity.Property(e => e.Status).HasMaxLength(20).IsRequired();
+                entity.Property(e => e.Excerpt).HasMaxLength(1000);
+                entity.Property(e => e.SeoTitle).HasMaxLength(200);
+                entity.Property(e => e.SeoDescription).HasMaxLength(300);
+                entity.Property(e => e.Template).HasMaxLength(100);
+                entity.Property(e => e.MetaJson).HasColumnType("jsonb");
+
+                entity.HasOne(e => e.Parent)
+                      .WithMany(p => p.Children)
+                      .HasForeignKey(e => e.ParentId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(e => e.Author)
+                      .WithMany()
+                      .HasForeignKey(e => e.AuthorId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(e => e.FeaturedMedia)
+                      .WithMany()
+                      .HasForeignKey(e => e.FeaturedMediaId)
+                      .OnDelete(DeleteBehavior.SetNull);
+
+                entity.HasIndex(e => e.Status);
+                entity.HasIndex(e => e.CreatedAt);
+                entity.HasIndex(e => e.UpdatedAt);
+                entity.HasIndex(e => e.PublishedAt);
+            });
+
+            // Configure PageRevision entity
+            builder.Entity<PageRevision>(entity =>
+            {
+                entity.ToTable("page_revisions");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Version).IsRequired();
+                entity.Property(e => e.ChangeSummary).HasMaxLength(500);
+                entity.HasIndex(e => new { e.PageId, e.Version }).IsUnique();
+
+                entity.HasOne(e => e.Page)
+                      .WithMany(p => p.Revisions)
+                      .HasForeignKey(e => e.PageId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(e => e.CreatedBy)
+                      .WithMany()
+                      .HasForeignKey(e => e.CreatedByUserId)
+                      .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // Configure MediaItem entity
+            builder.Entity<MediaItem>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.FileName).HasMaxLength(255).IsRequired();
+                entity.Property(e => e.OriginalFileName).HasMaxLength(255).IsRequired();
+                entity.Property(e => e.MimeType).HasMaxLength(100).IsRequired();
+                entity.Property(e => e.Url).HasMaxLength(500).IsRequired();
+                entity.Property(e => e.ThumbnailUrl).HasMaxLength(500);
+                entity.Property(e => e.StoragePath).HasMaxLength(1000).IsRequired();
+                entity.Property(e => e.ThumbnailPath).HasMaxLength(1000);
+                entity.Property(e => e.Title).HasMaxLength(255);
+                entity.Property(e => e.AltText).HasMaxLength(500);
+                entity.Property(e => e.Caption).HasMaxLength(1000);
+                entity.Property(e => e.Description).HasMaxLength(2000);
+
+                entity.HasOne(e => e.UploadedBy)
+                      .WithMany()
+                      .HasForeignKey(e => e.UploadedByUserId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                entity.ToTable("media_items");
+                entity.HasIndex(e => e.CreatedAt);
+                entity.HasIndex(e => e.UploadedByUserId);
+                entity.HasIndex(e => e.IsDeleted);
             });
             
             // 🔐 Configure UserActivity entity

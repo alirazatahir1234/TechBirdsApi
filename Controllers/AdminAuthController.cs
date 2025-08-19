@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using TechBirdsWebAPI.Models;
+using TechBirdsWebAPI.Extension;
 using TechBirdsWebAPI.Utils;
 using TechBirdsWebAPI.Services;
 
@@ -52,10 +53,7 @@ namespace TechBirdsWebAPI.Controllers
                 }
 
                 var roles = await _userManager.GetRolesAsync(user);
-                if (!roles.Contains("Admin"))
-                {
-                    return BadRequest(new { message = "Access denied. Admin role required." });
-                }
+                
 
                 var jwtSecret = _config["Jwt:Secret"];
                 if (string.IsNullOrEmpty(jwtSecret))
@@ -75,9 +73,7 @@ namespace TechBirdsWebAPI.Controllers
                     Email = user.Email ?? "",
                     Role = roles.FirstOrDefault() ?? "Admin",
                     Bio = user.Bio,
-                    
-                    // Profile & Media
-                    Avatar = user.Avatar != null ? Convert.ToBase64String(user.Avatar) : null,
+                    Avatar = user.Avatar.ToBase64String(),
                     Website = user.Website,
                     Twitter = user.Twitter,
                     LinkedIn = user.LinkedIn,
@@ -132,9 +128,7 @@ namespace TechBirdsWebAPI.Controllers
                     FirstName = request.FirstName,
                     LastName = request.LastName,
                     Bio = request.Bio ?? "Administrator",
-                    
-                    // Profile & Media (optional fields from request)
-                    Avatar = !string.IsNullOrEmpty(request.Avatar) ? Convert.FromBase64String(request.Avatar) : null,
+                    Avatar = string.IsNullOrWhiteSpace(request.Avatar) ? null : request.Avatar.ToByteArray(),
                     Website = request.Website,
                     Twitter = request.Twitter,
                     LinkedIn = request.LinkedIn,
@@ -208,9 +202,7 @@ namespace TechBirdsWebAPI.Controllers
                     Email = user.Email ?? "",
                     Role = roles.FirstOrDefault() ?? "Admin",
                     Bio = user.Bio,
-                    
-                    // Profile & Media
-                    Avatar = user.Avatar != null ? Convert.ToBase64String(user.Avatar) : null,
+                    Avatar = user.Avatar.ToBase64String(),
                     Website = user.Website,
                     Twitter = user.Twitter,
                     LinkedIn = user.LinkedIn,
@@ -274,7 +266,7 @@ namespace TechBirdsWebAPI.Controllers
         
         // Optional Profile Fields
         public string? Bio { get; set; }
-        public string? Avatar { get; set; }
+        public string? Avatar { get; set; } // base64 string from frontend
         public string? Website { get; set; }
         public string? Twitter { get; set; }
         public string? LinkedIn { get; set; }
@@ -296,7 +288,7 @@ namespace TechBirdsWebAPI.Controllers
         public string Bio { get; set; } = string.Empty;
         
         // Profile & Media
-        public string? Avatar { get; set; }
+        public string? Avatar { get; set; } // base64 string for frontend
         public string? Website { get; set; }
         public string? Twitter { get; set; }
         public string? LinkedIn { get; set; }

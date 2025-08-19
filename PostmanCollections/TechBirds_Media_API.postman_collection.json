@@ -1,0 +1,136 @@
+{
+  "info": {
+    "_postman_id": "c7e8e3f9-2c4e-4a89-9f70-7f0a3efc1234",
+    "name": "TechBirds Media API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Postman collection for TechBirds Media Library endpoints (WordPress-like). Configure variables baseUrl, token, mediaId, userId."
+  },
+  "item": [
+    {
+      "name": "Upload Media",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            { "key": "file", "type": "file", "src": "" },
+            { "key": "title", "type": "text", "value": "My file title" },
+            { "key": "altText", "type": "text", "value": "Accessible alt text" },
+            { "key": "caption", "type": "text", "value": "Short caption" },
+            { "key": "description", "type": "text", "value": "Longer description" }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/media/upload",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "media", "upload"]
+        },
+        "description": "Upload a single media file (image/document)."
+      }
+    },
+    {
+      "name": "List Media",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/media?page={{page}}&limit={{limit}}&mimeType={{mimeType}}&search={{search}}&sortBy={{sortBy}}&sortOrder={{sortOrder}}&uploadedByUserId={{userId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "media"],
+          "query": [
+            { "key": "page", "value": "{{page}}" },
+            { "key": "limit", "value": "{{limit}}" },
+            { "key": "mimeType", "value": "{{mimeType}}" },
+            { "key": "search", "value": "{{search}}" },
+            { "key": "sortBy", "value": "{{sortBy}}" },
+            { "key": "sortOrder", "value": "{{sortOrder}}" },
+            { "key": "uploadedByUserId", "value": "{{userId}}" }
+          ]
+        },
+        "description": "List media items with pagination, filters, and sorting."
+      }
+    },
+    {
+      "name": "Get Media By Id",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/media/{{mediaId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "media", "{{mediaId}}"]
+        },
+        "description": "Get a single media item by its id."
+      }
+    },
+    {
+      "name": "Update Media Metadata",
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Updated Title\",\n  \"altText\": \"Improved alt text\",\n  \"caption\": \"Updated caption\",\n  \"description\": \"Updated description\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/media/{{mediaId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "media", "{{mediaId}}"]
+        },
+        "description": "Update metadata (Title, AltText, Caption, Description) for a media item."
+      }
+    },
+    {
+      "name": "Soft Delete Media (Trash)",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/media/{{mediaId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "media", "{{mediaId}}"]
+        },
+        "description": "Soft delete (move to trash) a media item."
+      }
+    },
+    {
+      "name": "Hard Delete Media (Permanent)",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/media/{{mediaId}}/hard",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "media", "{{mediaId}}", "hard"]
+        },
+        "description": "Permanently delete a media item and remove its file(s)."
+      }
+    }
+  ],
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5000" },
+    { "key": "token", "value": "" },
+    { "key": "mediaId", "value": "00000000-0000-0000-0000-000000000000" },
+    { "key": "userId", "value": "" },
+    { "key": "page", "value": "1" },
+    { "key": "limit", "value": "20" },
+    { "key": "mimeType", "value": "" },
+    { "key": "search", "value": "" },
+    { "key": "sortBy", "value": "created" },
+    { "key": "sortOrder", "value": "desc" }
+  ]
+}
