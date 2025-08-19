@@ -1,0 +1,156 @@
+{
+  "info": {
+    "_postman_id": "b8d5f2a0-9a4a-4a3d-a8da-111111111111",
+    "name": "Pages API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Frontend guideline and cURL examples for all Pages endpoints.\n\nVariables used below:\n- Base URL: http://localhost:5000 ({{baseUrl}} in Postman)\n- Token: Bearer REPLACE_WITH_JWT ({{token}} in Postman)\n- Page ID: 00000000-0000-0000-0000-000000000000 ({{pageId}})\n- Revision ID: 00000000-0000-0000-0000-000000000000 ({{revisionId}})\n- Slug: about-us ({{slug}})\n\ncURL commands:\n\n1) Create page [AUTH]\n\ncurl -X POST \"http://localhost:5000/api/Pages\" \\\n  -H \"Authorization: Bearer REPLACE_WITH_JWT\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"title\": \"About Us\",\n    \"content\": \"<p>About TechBirds.</p>\",\n    \"excerpt\": \"About page excerpt\",\n    \"status\": \"draft\",\n    \"parentId\": null,\n    \"menuOrder\": 0,\n    \"template\": null,\n    \"featuredMediaId\": null,\n    \"seoTitle\": \"About Us - TechBirds\",\n    \"seoDescription\": \"Learn more about TechBirds\",\n    \"metaJson\": \"{\\\"key\\\":\\\"value\\\"}\",\n    \"slug\": \"about-us\",\n    \"changeSummary\": \"Initial version\"\n  }'\n\n2) Update page [AUTH]\n\ncurl -X PUT \"http://localhost:5000/api/Pages/00000000-0000-0000-0000-000000000000\" \\\n  -H \"Authorization: Bearer REPLACE_WITH_JWT\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"title\": \"About TechBirds\",\n    \"content\": \"<p>Updated About content.</p>\",\n    \"excerpt\": \"Updated excerpt\",\n    \"status\": \"published\",\n    \"menuOrder\": 1,\n    \"seoTitle\": \"About TechBirds - Updated\",\n    \"seoDescription\": \"Updated SEO description\",\n    \"changeSummary\": \"Publish updated content\"\n  }'\n\n3) Get page by id\n\ncurl -X GET \"http://localhost:5000/api/Pages/00000000-0000-0000-0000-000000000000\"\n\n4) Get page by slug\n\ncurl -X GET \"http://localhost:5000/api/Pages/slug/about-us\"\n\n5) List pages\n\ncurl -X GET \"http://localhost:5000/api/Pages?page=1&limit=20&search=about&status=published&sortBy=created&sortOrder=desc\"\n\n6) Soft delete page [AUTH]\n\ncurl -X DELETE \"http://localhost:5000/api/Pages/00000000-0000-0000-0000-000000000000\" \\\n  -H \"Authorization: Bearer REPLACE_WITH_JWT\"\n\n7) Hard delete page [AUTH]\n\ncurl -X DELETE \"http://localhost:5000/api/Pages/00000000-0000-0000-0000-000000000000/hard\" \\\n  -H \"Authorization: Bearer REPLACE_WITH_JWT\"\n\n8) List revisions [AUTH]\n\ncurl -X GET \"http://localhost:5000/api/Pages/00000000-0000-0000-0000-000000000000/revisions\" \\\n  -H \"Authorization: Bearer REPLACE_WITH_JWT\"\n\n9) Restore a revision [AUTH]\n\ncurl -X POST \"http://localhost:5000/api/Pages/00000000-0000-0000-0000-000000000000/restore/00000000-0000-0000-0000-000000000000\" \\\n  -H \"Authorization: Bearer REPLACE_WITH_JWT\"\n\nNotes:\n- Auth roles required per controller: Create/Update/Restore/Revisions: Author,Editor,Admin,SuperAdmin; Soft delete: Editor,Admin,SuperAdmin; Hard delete: Admin,SuperAdmin. Public endpoints: Get by id, Get by slug, List.\n"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5000" },
+    { "key": "token", "value": "REPLACE_WITH_JWT" },
+    { "key": "pageId", "value": "00000000-0000-0000-0000-000000000000" },
+    { "key": "revisionId", "value": "00000000-0000-0000-0000-000000000000" },
+    { "key": "slug", "value": "about-us" },
+    { "key": "page", "value": "1" },
+    { "key": "limit", "value": "20" },
+    { "key": "search", "value": "about" },
+    { "key": "status", "value": "published" },
+    { "key": "sortBy", "value": "created" },
+    { "key": "sortOrder", "value": "desc" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      { "key": "token", "value": "{{token}}", "type": "string" }
+    ]
+  },
+  "item": [
+    {
+      "name": "Create page [POST]",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"About Us\",\n  \"content\": \"<p>About TechBirds.</p>\",\n  \"excerpt\": \"About page excerpt\",\n  \"status\": \"draft\",\n  \"parentId\": null,\n  \"menuOrder\": 0,\n  \"template\": null,\n  \"featuredMediaId\": null,\n  \"seoTitle\": \"About Us - TechBirds\",\n  \"seoDescription\": \"Learn more about TechBirds\",\n  \"metaJson\": \"{\\\"key\\\":\\\"value\\\"}\",\n  \"slug\": \"about-us\",\n  \"changeSummary\": \"Initial version\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/Pages",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "Pages"]
+        }
+      }
+    },
+    {
+      "name": "Update page [PUT]",
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"About TechBirds\",\n  \"content\": \"<p>Updated About content.</p>\",\n  \"excerpt\": \"Updated excerpt\",\n  \"status\": \"published\",\n  \"menuOrder\": 1,\n  \"seoTitle\": \"About TechBirds - Updated\",\n  \"seoDescription\": \"Updated SEO description\",\n  \"changeSummary\": \"Publish updated content\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/Pages/{{pageId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "Pages", "{{pageId}}"]
+        }
+      }
+    },
+    {
+      "name": "Get page by id [GET] (public)",
+      "request": {
+        "auth": { "type": "noauth" },
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/api/Pages/{{pageId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "Pages", "{{pageId}}"]
+        }
+      }
+    },
+    {
+      "name": "Get page by slug [GET] (public)",
+      "request": {
+        "auth": { "type": "noauth" },
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/api/Pages/slug/{{slug}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "Pages", "slug", "{{slug}}"]
+        }
+      }
+    },
+    {
+      "name": "List pages [GET] (public)",
+      "request": {
+        "auth": { "type": "noauth" },
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/api/Pages?page={{page}}&limit={{limit}}&search={{search}}&status={{status}}&sortBy={{sortBy}}&sortOrder={{sortOrder}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "Pages"],
+          "query": [
+            {"key": "page", "value": "{{page}}"},
+            {"key": "limit", "value": "{{limit}}"},
+            {"key": "search", "value": "{{search}}"},
+            {"key": "status", "value": "{{status}}"},
+            {"key": "parentId", "value": ""},
+            {"key": "sortBy", "value": "{{sortBy}}"},
+            {"key": "sortOrder", "value": "{{sortOrder}}"}
+          ]
+        }
+      }
+    },
+    {
+      "name": "Soft delete page [DELETE]",
+      "request": {
+        "method": "DELETE",
+        "url": {
+          "raw": "{{baseUrl}}/api/Pages/{{pageId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "Pages", "{{pageId}}"]
+        }
+      }
+    },
+    {
+      "name": "Hard delete page [DELETE]",
+      "request": {
+        "method": "DELETE",
+        "url": {
+          "raw": "{{baseUrl}}/api/Pages/{{pageId}}/hard",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "Pages", "{{pageId}}", "hard"]
+        }
+      }
+    },
+    {
+      "name": "List revisions [GET]",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/api/Pages/{{pageId}}/revisions",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "Pages", "{{pageId}}", "revisions"]
+        }
+      }
+    },
+    {
+      "name": "Restore a revision [POST]",
+      "request": {
+        "method": "POST",
+        "url": {
+          "raw": "{{baseUrl}}/api/Pages/{{pageId}}/restore/{{revisionId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "Pages", "{{pageId}}", "restore", "{{revisionId}}"]
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+curl -X POST "http://localhost:5000/api/Pages" \
+  -H "Authorization: Bearer REPLACE_WITH_JWT" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "About Us",
+    "content": "<p>About TechBirds.</p>",
+    "excerpt": "About page excerpt",
+    "status": "draft",
+    "parentId": null,
+    "menuOrder": 0,
+    "template": null,
+    "featuredMediaId": null,
+    "seoTitle": "About Us - TechBirds",
+    "seoDescription": "Learn more about TechBirds",
+    "metaJson": "{\"key\":\"value\"}",
+    "slug": "about-us",
+    "changeSummary": "Initial version"
+  }'
