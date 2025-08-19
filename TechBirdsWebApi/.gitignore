@@ -1,12 +1,3 @@
-# OS / System files
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-
 # Build results
 [Dd]ebug/
 [Dd]ebugPublic/
@@ -23,14 +14,11 @@ bld/
 [Ll]og/
 [Ll]ogs/
 
-# Visual Studio
-.vs/
+# Visual Studio cache files
 *.suo
 *.user
 *.userosscache
 *.sln.docstates
-*.vssscc
-*.vspscc
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
@@ -38,27 +26,32 @@ bld/
 # Mono auto generated files
 mono_crash.*
 
-# IDE settings
-.vscode/
-.idea/
+# Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
 
-# NuGet
-*.nupkg
-*.snupkg
-**/packages/*
-!**/packages/build/
-!**/packages/repositories.config
-*.nuget.props
-*.nuget.targets
+# Visual Studio
+.vs/
 
-# Test results / coverage
-TestResults/
-*.coverage
-*.coveragexml
-
-# ReSharper
-_ReSharper*/
-*.[Rr]e[Ss]harper
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
 
 # Logs
 *.log
@@ -73,17 +66,12 @@ yarn-error.log*
 .env.test.local
 .env.production.local
 
-# Dotnet tooling
-.project
-.directory
-*.crunchproject.local.xml
-
-# Local settings / secrets
-local.settings.json
+# IDE
+.vscode/
+.idea/
 
 # Temporary files
 *.tmp
 *.temp
 *.cache
 *.bak
-~$*
