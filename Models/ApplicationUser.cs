@@ -11,7 +11,7 @@ namespace TechBirdsWebAPI.Models
         public string Bio { get; set; } = string.Empty;
         
         // Profile & Media
-        public string? Avatar { get; set; }
+    public byte[]? Avatar { get; set; }
         public string? Website { get; set; }
         public string? Twitter { get; set; }
         public string? LinkedIn { get; set; }

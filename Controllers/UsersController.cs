@@ -28,6 +28,7 @@ namespace TechBirdsWebAPI.Controllers
             _userActivityService = userActivityService;
             _exceptionLogger = exceptionLogger;
         }
+    // ...existing code...
 
         // GET: api/users - List all users (public profiles)
         [HttpGet]
@@ -103,7 +104,7 @@ namespace TechBirdsWebAPI.Controllers
                         FirstName = user.FirstName,
                         LastName = user.LastName,
                         Bio = user.Bio,
-                        Avatar = user.Avatar,
+                            Avatar = user.Avatar != null ? Convert.ToBase64String(user.Avatar) : null,
                         Website = user.Website,
                         Twitter = user.Twitter,
                         LinkedIn = user.LinkedIn,
@@ -197,7 +198,7 @@ namespace TechBirdsWebAPI.Controllers
                     FirstName = request.FirstName,
                     LastName = request.LastName,
                     Bio = request.Bio ?? "",
-                    Avatar = request.Avatar,
+                    Avatar = !string.IsNullOrEmpty(request.Avatar) ? Convert.FromBase64String(request.Avatar) : null,
                     Website = request.Website,
                     Twitter = request.Twitter,
                     LinkedIn = request.LinkedIn,
@@ -279,7 +280,7 @@ namespace TechBirdsWebAPI.Controllers
                     FirstName = user.FirstName,
                     LastName = user.LastName,
                     Bio = user.Bio,
-                    Avatar = user.Avatar,
+                        Avatar = user.Avatar != null ? Convert.ToBase64String(user.Avatar) : null,
                     Website = user.Website,
                     Twitter = user.Twitter,
                     LinkedIn = user.LinkedIn,
@@ -305,144 +306,32 @@ namespace TechBirdsWebAPI.Controllers
         }
 
         // GET: api/users/profile - Get current user's profile
-        [HttpGet("profile")]
-        [Authorize]
-        public async Task<IActionResult> GetCurrentUserProfile()
-        {
-            try
-            {
-                var userId = _userManager.GetUserId(User);
-                if (userId == null)
-                {
-                    return Unauthorized();
-                }
-
-                var user = await _context.Users
-                    .Include(u => u.Posts)
-                    .FirstOrDefaultAsync(u => u.Id == userId);
-
-                if (user == null)
-                {
-                    return NotFound(new { message = "User profile not found" });
-                }
-
-                var roles = await _userManager.GetRolesAsync(user);
-                
-                var userProfile = new UserDetailedProfile
-                {
-                    Id = user.Id,
-                    Name = user.Name,
-                    FirstName = user.FirstName,
-                    LastName = user.LastName,
-                    Email = user.Email,
-                    Bio = user.Bio,
-                    Avatar = user.Avatar,
-                    Website = user.Website,
-                    Twitter = user.Twitter,
-                    LinkedIn = user.LinkedIn,
-                    Specialization = user.Specialization,
-                    PostsCount = user.PostsCount,
-                    TotalViews = user.TotalViews,
-                    JoinedAt = user.JoinedAt.ToString("yyyy-MM-ddTHH:mm:ssZ"),
-                    LastActive = user.LastActive?.ToString("yyyy-MM-ddTHH:mm:ssZ"),
-                    Role = roles.FirstOrDefault() ?? "Subscriber",
-                    Roles = roles.ToList(), // ✅ ADDED: Complete list of user roles
-                    IsActive = user.LockoutEnd == null || user.LockoutEnd <= DateTimeOffset.UtcNow, // ✅ ADDED: Account active status
-                    
-                };
-
-                return Ok(userProfile);
-            }
-            catch (Exception ex)
-            {
-                // 🔐 Log exception with user context
-                var userId = _userManager.GetUserId(User);
-                await _exceptionLogger.LogExceptionAsync(ex, HttpContext, "UsersController.GetCurrentUserProfile", userId, "UserManagement");
-                
-                // 🔒 SECURITY: Don't expose internal error details
-                return StatusCode(500, new { message = "Error retrieving profile" });
-            }
-        }
-
-        // PUT: api/users/profile - Update current user's profile
         [HttpPut("profile")]
         [Authorize]
         public async Task<IActionResult> UpdateUserProfile(UpdateUserProfileRequest request)
         {
             try
             {
-                // 🔒 SECURITY: Input validation
+                // Input validation
                 if (string.IsNullOrWhiteSpace(request.FirstName))
-                {
                     return BadRequest(new { message = "First name is required" });
-                }
-                
                 if (string.IsNullOrWhiteSpace(request.LastName))
-                {
                     return BadRequest(new { message = "Last name is required" });
-                }
 
                 var userId = _userManager.GetUserId(User);
                 if (userId == null)
-                {
                     return Unauthorized();
-                }
 
                 var user = await _userManager.FindByIdAsync(userId);
                 if (user == null)
-                {
                     return NotFound(new { message = "User not found" });
-                }
-
-                // 🔒 SECURITY: Check if role update is requested and validate permissions
-                bool roleUpdateRequested = !string.IsNullOrEmpty(request.Role);
-                string? newRole = null;
-                
-                if (roleUpdateRequested)
-                {
-                    var currentUserRoles = await _userManager.GetRolesAsync(user);
-                    
-                    // Only admins can change roles, or users can downgrade their own role (with restrictions)
-                    bool isAdmin = currentUserRoles.Any(r => new[] { "Admin", "SuperAdmin" }.Contains(r));
-                    bool isSelfDowngrade = IsSelfDowngrade(currentUserRoles, request.Role!);
-                    
-                    if (!isAdmin && !isSelfDowngrade)
-                    {
-                        return Forbid("Only administrators can change user roles");
-                    }
-                    
-                    // Validate the new role
-                    var validRoles = new[] { "Subscriber", "Contributor", "Author", "Admin", "Editor", "SuperAdmin" };
-                    if (!validRoles.Contains(request.Role))
-                    {
-                        return BadRequest(new { message = "Invalid role specified", validRoles });
-                    }
-                    
-                    // Security check: Only SuperAdmin can assign SuperAdmin role
-                    if (request.Role == "SuperAdmin" && !currentUserRoles.Contains("SuperAdmin"))
-                    {
-                        return Forbid("Only SuperAdmin can assign SuperAdmin role");
-                    }
-                }
-
-                // 🔒 SECURITY: Check if email update is requested
-                bool emailUpdateRequested = !string.IsNullOrEmpty(request.Email) && request.Email != user.Email;
-                if (emailUpdateRequested)
-                {
-                    // Check if new email already exists
-                    var existingUser = await _userManager.FindByEmailAsync(request.Email!);
-                    if (existingUser != null && existingUser.Id != userId)
-                    {
-                        return BadRequest(new { message = "Email already exists" });
-                    }
-                }
 
                 // Update profile fields
                 user.FirstName = request.FirstName;
                 user.LastName = request.LastName;
                 user.Name = string.IsNullOrEmpty(request.Name) ? $"{request.FirstName} {request.LastName}" : request.Name;
                 user.Bio = request.Bio ?? "";
-                user.Avatar = request.Avatar;
+                user.Avatar = !string.IsNullOrEmpty(request.Avatar) ? Convert.FromBase64String(request.Avatar) : null;
                 user.Website = request.Website;
                 user.Twitter = request.Twitter;
                 user.LinkedIn = request.LinkedIn;
@@ -451,32 +340,24 @@ namespace TechBirdsWebAPI.Controllers
                 user.LastActive = DateTime.UtcNow;
 
                 // Update email if requested
-                if (emailUpdateRequested)
+                if (!string.IsNullOrEmpty(request.Email) && request.Email != user.Email)
                 {
+                    var existingUser = await _userManager.FindByEmailAsync(request.Email);
+                    if (existingUser != null && existingUser.Id != userId)
+                        return BadRequest(new { message = "Email already exists" });
                     user.Email = request.Email;
-                    user.UserName = request.Email; // Keep username in sync with email
+                    user.UserName = request.Email;
                 }
 
                 // Update isActive status if provided
                 if (request.IsActive.HasValue)
                 {
-                    // Only admins can change active status
                     var currentUserRoles = await _userManager.GetRolesAsync(user);
                     bool isAdmin = currentUserRoles.Any(r => new[] { "Admin", "SuperAdmin" }.Contains(r));
-                    
                     if (isAdmin)
                     {
                         user.LockoutEnabled = !request.IsActive.Value;
-                        if (!request.IsActive.Value)
-                        {
-                            // Lock the account until year 9999 (effectively permanent)
-                            user.LockoutEnd = DateTimeOffset.MaxValue;
-                        }
-                        else
-                        {
-                            // Unlock the account
-                            user.LockoutEnd = null;
-                        }
+                        user.LockoutEnd = request.IsActive.Value ? null : DateTimeOffset.MaxValue;
                     }
                     else
                     {
@@ -486,275 +367,51 @@ namespace TechBirdsWebAPI.Controllers
 
                 var result = await _userManager.UpdateAsync(user);
                 if (!result.Succeeded)
-                {
-                    // 🔐 Log failed profile update
-                    await _userActivityService.LogActivityAsync(
-                        userId, 
-                        "PROFILE_UPDATE_FAILED", 
-                        "Profile update failed due to validation errors",
-                        new { Errors = result.Errors.Select(e => e.Description) },
-                        false,
-                        string.Join(", ", result.Errors.Select(e => e.Description))
-                    );
-                    
                     return BadRequest(new { message = "Profile update failed", errors = result.Errors });
-                }
 
-                // 🔧 Handle password update if requested
+                // Handle password update if requested
                 if (!string.IsNullOrEmpty(request.Password))
                 {
                     var token = await _userManager.GeneratePasswordResetTokenAsync(user);
                     var passwordResult = await _userManager.ResetPasswordAsync(user, token, request.Password);
-                    
                     if (!passwordResult.Succeeded)
-                    {
                         return BadRequest(new { message = "Password update failed", errors = passwordResult.Errors });
-                    }
-
-                    // Log password change
-                    await _userActivityService.LogActivityAsync(
-                        userId,
-                        "PASSWORD_CHANGED",
-                        "User changed their password",
-                        new { UpdatedBy = "Self" }
-                    );
                 }
 
-                // 🔧 Handle role update if requested
-                if (roleUpdateRequested && !string.IsNullOrEmpty(request.Role))
+                // Handle role update if requested
+                if (!string.IsNullOrEmpty(request.Role))
                 {
                     var currentRoles = await _userManager.GetRolesAsync(user);
-                    
-                    // Only update if the role is actually different
                     if (!currentRoles.Contains(request.Role))
                     {
-                        // Remove all current roles
                         if (currentRoles.Count > 0)
                         {
                             var removeResult = await _userManager.RemoveFromRolesAsync(user, currentRoles);
                             if (!removeResult.Succeeded)
-                            {
                                 return BadRequest(new { message = "Failed to remove current roles", errors = removeResult.Errors });
-                            }
                         }
-
-                        // Add the new role
                         var addResult = await _userManager.AddToRoleAsync(user, request.Role);
                         if (!addResult.Succeeded)
-                        {
                             return BadRequest(new { message = "Failed to assign new role", errors = addResult.Errors });
-                        }
-
-                        newRole = request.Role;
-
-                        // Log the role change
-                        await _userActivityService.LogActivityAsync(
-                            userId,
-                            "ROLE_UPDATED",
-                            $"Role changed from {string.Join(",", currentRoles)} to {request.Role}",
-                            new { 
-                                PreviousRoles = currentRoles,
-                                NewRole = request.Role,
-                                UpdatedBy = "Self"
-                            }
-                        );
                     }
                 }
 
-                // 🔐 Log successful profile update
+                // Log profile update
                 await _userActivityService.LogProfileUpdateAsync(
                     userId,
                     Request.HttpContext.Connection.RemoteIpAddress?.ToString() ?? "Unknown",
                     Request.Headers.UserAgent.ToString(),
-                    new { 
-                        UpdatedFields = new { 
-                            request.FirstName, 
-                            request.LastName, 
-                            request.Bio, 
-                            request.Specialization,
-                            EmailChanged = emailUpdateRequested,
-                            PasswordChanged = !string.IsNullOrEmpty(request.Password),
-                            RoleChanged = newRole != null,
-                            NewRole = newRole,
-                            ActiveStatusChanged = request.IsActive.HasValue
-                        } 
-                    }
+                    new { UpdatedFields = new { request.FirstName, request.LastName, request.Bio, request.Specialization } }
                 );
 
-                // Build response message
-                var updateMessages = new List<string> { "Profile updated successfully" };
-                if (emailUpdateRequested) updateMessages.Add("Email updated");
-                if (!string.IsNullOrEmpty(request.Password)) updateMessages.Add("Password updated");
-                if (newRole != null) updateMessages.Add($"Role changed to {newRole}");
-                if (request.IsActive.HasValue) updateMessages.Add($"Account {(request.IsActive.Value ? "activated" : "deactivated")}");
-
-                return Ok(new { 
-                    message = string.Join(". ", updateMessages),
-                    emailChanged = emailUpdateRequested,
-                    passwordChanged = !string.IsNullOrEmpty(request.Password),
-                    roleChanged = newRole != null,
-                    newRole = newRole,
-                    activeStatusChanged = request.IsActive.HasValue,
-                    isActive = request.IsActive
-                });
+                return Ok(new { message = "Profile updated successfully" });
             }
             catch (Exception ex)
             {
-                // 🔐 Log exception with user context
                 var userId = _userManager.GetUserId(User);
                 await _exceptionLogger.LogExceptionAsync(ex, HttpContext, "UsersController.UpdateUserProfile", userId, "UserManagement");
-                
-                // 🔒 SECURITY: Don't expose internal error details  
                 return StatusCode(500, new { message = "Error updating profile" });
             }
-        }
-
-        // 🔐 GET: api/users/activities - Get current user's activities
-        [HttpGet("activities")]
-        [Authorize]
-        public async Task<IActionResult> GetUserActivities([FromQuery] int page = 1, [FromQuery] int limit = 50)
-        {
-            try
-            {
-                var userId = _userManager.GetUserId(User);
-                if (userId == null)
-                {
-                    return Unauthorized();
-                }
-
-                var activities = await _userActivityService.GetUserActivitiesAsync(userId, page, limit);
-                
-                return Ok(new { activities, pagination = new { page, limit, total = activities.Count } });
-            }
-            catch (Exception ex)
-            {
-                var userId = _userManager.GetUserId(User);
-                await _exceptionLogger.LogExceptionAsync(ex, HttpContext, "UsersController.GetUserActivities", userId, "UserManagement");
-                
-                return StatusCode(500, new { message = "Error retrieving activities" });
-            }
-        }
-
-        // 🔐 GET: api/users/admin/activities - Get all user activities (Admin only)
-        [HttpGet("admin/activities")]
-        [Authorize(Roles = "Admin,SuperAdmin")]
-        public async Task<IActionResult> GetAllUserActivities([FromQuery] string? userId = null, [FromQuery] int page = 1, [FromQuery] int limit = 50)
-        {
-            try
-            {
-                var activities = await _context.UserActivities
-                    .Where(ua => userId == null || ua.UserId == userId)
-                    .OrderByDescending(ua => ua.CreatedAt)
-                    .Skip((page - 1) * limit)
-                    .Take(limit)
-                    .ToListAsync();
-                
-                var totalCount = await _context.UserActivities
-                    .Where(ua => userId == null || ua.UserId == userId)
-                    .CountAsync();
-
-                return Ok(new { 
-                    activities, 
-                    pagination = new { 
-                        page, 
-                        limit, 
-                        total = totalCount,
-                        totalPages = (int)Math.Ceiling((double)totalCount / limit)
-                    } 
-                });
-            }
-            catch (Exception ex)
-            {
-                var currentUserId = _userManager.GetUserId(User);
-                await _exceptionLogger.LogExceptionAsync(ex, HttpContext, "UsersController.GetAllUserActivities", currentUserId, "AdminOperations");
-                
-                return StatusCode(500, new { message = "Error retrieving activities" });
-            }
-        }
-
-        // 🔐 GET: api/users/admin/exceptions - Get system exceptions (Admin only)
-        [HttpGet("admin/exceptions")]
-        [Authorize(Roles = "Admin,SuperAdmin")]
-        public async Task<IActionResult> GetSystemExceptions([FromQuery] string? userId = null, [FromQuery] bool unResolvedOnly = false, [FromQuery] int page = 1, [FromQuery] int limit = 50)
-        {
-            try
-            {
-                List<Models.SystemException> exceptions;
-                
-                if (unResolvedOnly)
-                {
-                    exceptions = await _exceptionLogger.GetUnresolvedExceptionsAsync(page, limit);
-                }
-                else
-                {
-                    exceptions = await _exceptionLogger.GetExceptionsAsync(userId, page, limit);
-                }
-
-                return Ok(new { 
-                    exceptions, 
-                    pagination = new { 
-                        page, 
-                        limit, 
-                        total = exceptions.Count 
-                    } 
-                });
-            }
-            catch (Exception ex)
-            {
-                var currentUserId = _userManager.GetUserId(User);
-                await _exceptionLogger.LogExceptionAsync(ex, HttpContext, "UsersController.GetSystemExceptions", currentUserId, "AdminOperations");
-                
-                return StatusCode(500, new { message = "Error retrieving exceptions" });
-            }
-        }
-
-        // 🔐 PUT: api/users/admin/exceptions/{id}/resolve - Mark exception as resolved (Admin only)
-        [HttpPut("admin/exceptions/{id}/resolve")]
-        [Authorize(Roles = "Admin,SuperAdmin")]
-        public async Task<IActionResult> ResolveException(int id, [FromBody] ResolveExceptionRequest request)
-        {
-            try
-            {
-                var currentUserId = _userManager.GetUserId(User);
-                var currentUser = await _userManager.FindByIdAsync(currentUserId!);
-                
-                await _exceptionLogger.MarkAsResolvedAsync(id, currentUser?.Name ?? "Admin", request.Resolution);
-                
-                return Ok(new { message = "Exception marked as resolved" });
-            }
-            catch (Exception ex)
-            {
-                var currentUserId = _userManager.GetUserId(User);
-                await _exceptionLogger.LogExceptionAsync(ex, HttpContext, "UsersController.ResolveException", currentUserId, "AdminOperations");
-                
-                return StatusCode(500, new { message = "Error resolving exception" });
-            }
-        }
-
-        // Helper method to check if role change is a valid self-downgrade
-        private static bool IsSelfDowngrade(IList<string> currentRoles, string newRole)
-        {
-            // Define role hierarchy (higher number = higher privilege)
-            var roleHierarchy = new Dictionary<string, int>
-            {
-                { "Subscriber", 1 },
-                { "Contributor", 2 },
-                { "Author", 3 },
-                { "Editor", 4 },
-                { "Admin", 5 },
-                { "SuperAdmin", 6 }
-            };
-
-            var currentHighestRole = currentRoles
-                .Where(r => roleHierarchy.ContainsKey(r))
-                .Select(r => roleHierarchy[r])
-                .DefaultIfEmpty(1)
-                .Max();
-
-            var newRoleLevel = roleHierarchy.GetValueOrDefault(newRole, 1);
-
-            // Allow self-downgrade (going to a lower privilege role)
-            return newRoleLevel <= currentHighestRole && newRoleLevel < currentHighestRole;
         }
     }
 
@@ -796,7 +453,7 @@ namespace TechBirdsWebAPI.Controllers
         public string FirstName { get; set; } = string.Empty;
         public string LastName { get; set; } = string.Empty;
         public string Bio { get; set; } = string.Empty;
-        public string? Avatar { get; set; }
+    public string? Avatar { get; set; } // base64 string for frontend
         public string? Website { get; set; }
         public string? Twitter { get; set; }
         public string? LinkedIn { get; set; }

@@ -77,7 +77,7 @@ namespace TechBirdsWebAPI.Controllers
                     Bio = user.Bio,
                     
                     // Profile & Media
-                    Avatar = user.Avatar,
+                    Avatar = user.Avatar != null ? Convert.ToBase64String(user.Avatar) : null,
                     Website = user.Website,
                     Twitter = user.Twitter,
                     LinkedIn = user.LinkedIn,
@@ -134,7 +134,7 @@ namespace TechBirdsWebAPI.Controllers
                     Bio = request.Bio ?? "Administrator",
                     
                     // Profile & Media (optional fields from request)
-                    Avatar = request.Avatar,
+                    Avatar = !string.IsNullOrEmpty(request.Avatar) ? Convert.FromBase64String(request.Avatar) : null,
                     Website = request.Website,
                     Twitter = request.Twitter,
                     LinkedIn = request.LinkedIn,
@@ -210,7 +210,7 @@ namespace TechBirdsWebAPI.Controllers
                     Bio = user.Bio,
                     
                     // Profile & Media
-                    Avatar = user.Avatar,
+                    Avatar = user.Avatar != null ? Convert.ToBase64String(user.Avatar) : null,
                     Website = user.Website,
                     Twitter = user.Twitter,
                     LinkedIn = user.LinkedIn,
