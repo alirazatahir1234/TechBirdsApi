@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace TechBirdsWebAPI.Models
+namespace TechBirdsApi.Models
 {
     public class Page
     {

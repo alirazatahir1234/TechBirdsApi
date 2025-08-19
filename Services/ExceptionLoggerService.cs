@@ -1,17 +1,17 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
-using TechBirdsWebAPI.Data;
-using TechBirdsWebAPI.Models;
+using TechBirdsApi.Data;
+using TechBirdsApi.Models;
 
-namespace TechBirdsWebAPI.Services
+namespace TechBirdsApi.Services
 {
     public interface IExceptionLoggerService
     {
         Task LogExceptionAsync(Exception ex, string source, string? userId = null, string category = "General", string severity = "Error");
         Task LogExceptionAsync(Exception ex, HttpContext httpContext, string source, string? userId = null, string category = "General");
-        Task<List<Models.SystemException>> GetExceptionsAsync(string? userId = null, int page = 1, int limit = 50);
-        Task<List<Models.SystemException>> GetUnresolvedExceptionsAsync(int page = 1, int limit = 50);
+        Task<List<TechBirdsApi.Models.SystemException>> GetExceptionsAsync(string? userId = null, int page = 1, int limit = 50);
+        Task<List<TechBirdsApi.Models.SystemException>> GetUnresolvedExceptionsAsync(int page = 1, int limit = 50);
         Task MarkAsResolvedAsync(int exceptionId, string resolvedBy, string? resolution = null);
     }
 
@@ -51,7 +51,7 @@ namespace TechBirdsWebAPI.Services
                 var severity = DetermineSeverity(ex);
                 var requestBody = await GetRequestBodyAsync(httpContext);
 
-                var systemException = new Models.SystemException
+                var systemException = new TechBirdsApi.Models.SystemException
                 {
                     UserId = userId,
                     UserName = userName,
@@ -82,7 +82,7 @@ namespace TechBirdsWebAPI.Services
             }
         }
 
-        public async Task<List<Models.SystemException>> GetExceptionsAsync(string? userId = null, int page = 1, int limit = 50)
+        public async Task<List<TechBirdsApi.Models.SystemException>> GetExceptionsAsync(string? userId = null, int page = 1, int limit = 50)
         {
             var query = _context.SystemExceptions.AsQueryable();
             
@@ -98,7 +98,7 @@ namespace TechBirdsWebAPI.Services
                 .ToListAsync();
         }
 
-        public async Task<List<Models.SystemException>> GetUnresolvedExceptionsAsync(int page = 1, int limit = 50)
+        public async Task<List<TechBirdsApi.Models.SystemException>> GetUnresolvedExceptionsAsync(int page = 1, int limit = 50)
         {
             return await _context.SystemExceptions
                 .Where(se => !se.IsResolved)

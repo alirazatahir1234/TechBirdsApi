@@ -2,12 +2,12 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using TechBirdsWebAPI.Extension;
-using TechBirdsWebAPI.Data;
-using TechBirdsWebAPI.Models;
-using TechBirdsWebAPI.Services;
+using TechBirdsApi.Extension;
+using TechBirdsApi.Data;
+using TechBirdsApi.Models;
+using TechBirdsApi.Services;
 
-namespace TechBirdsWebAPI.Controllers
+namespace TechBirdsApi.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]

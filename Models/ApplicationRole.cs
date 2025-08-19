@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 
-namespace TechBirdsWebAPI.Models
+namespace TechBirdsApi.Models
 {
     public class ApplicationRole : IdentityRole
     {

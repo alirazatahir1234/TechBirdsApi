@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using TechBirdsWebAPI.Data;
-using TechBirdsWebAPI.Models;
+using TechBirdsApi.Data;
+using TechBirdsApi.Models;
 
-namespace TechBirdsWebAPI.Controllers
+namespace TechBirdsApi.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]

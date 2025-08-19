@@ -1,6 +1,6 @@
 using System;
 
-namespace TechBirdsWebAPI.Models
+namespace TechBirdsApi.Models
 {
     public class MediaItem
     {

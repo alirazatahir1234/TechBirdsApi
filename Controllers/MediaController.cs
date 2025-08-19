@@ -1,15 +1,15 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using TechBirdsWebAPI.Data;
-using TechBirdsWebAPI.Models;
+using TechBirdsApi.Data;
+using TechBirdsApi.Models;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.AspNetCore.Identity;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats.Jpeg;
 using SixLabors.ImageSharp.Processing;
 
-namespace TechBirdsWebAPI.Controllers
+namespace TechBirdsApi.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]

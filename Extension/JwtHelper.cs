@@ -2,9 +2,9 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
-using TechBirdsWebAPI.Models;
+using TechBirdsApi.Models;
 
-namespace TechBirdsWebAPI.Utils
+namespace TechBirdsApi.Extension
 {
     public static class JwtHelper
     {

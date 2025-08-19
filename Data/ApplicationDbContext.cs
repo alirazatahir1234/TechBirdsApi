@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using TechBirdsWebAPI.Models;
+using TechBirdsApi.Models;
 
-namespace TechBirdsWebAPI.Data
+namespace TechBirdsApi.Data
 {
     public class ApplicationDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, string>
     {
@@ -20,7 +20,7 @@ namespace TechBirdsWebAPI.Data
         
         // 🔐 Logging and Exception Tracking Tables
         public DbSet<UserActivity> UserActivities { get; set; }
-        public DbSet<Models.SystemException> SystemExceptions { get; set; }
+        public DbSet<TechBirdsApi.Models.SystemException> SystemExceptions { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -208,7 +208,7 @@ namespace TechBirdsWebAPI.Data
             });
             
             // 🔐 Configure SystemException entity
-            builder.Entity<Models.SystemException>(entity =>
+            builder.Entity<TechBirdsApi.Models.SystemException>(entity =>
             {
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.ExceptionType).HasMaxLength(200).IsRequired();

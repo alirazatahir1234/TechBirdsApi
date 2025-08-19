@@ -1,6 +1,6 @@
 using System;
 
-namespace TechBirdsWebAPI.Extension
+namespace TechBirdsApi.Extension
 {
     public static class Base64Extensions
     {

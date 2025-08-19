@@ -1,4 +1,4 @@
-namespace TechBirdsWebAPI.Models
+namespace TechBirdsApi.Models
 {
     public class Post
     {

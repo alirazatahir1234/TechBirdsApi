@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
-using TechBirdsWebAPI.Data;
-using TechBirdsWebAPI.Models;
+using TechBirdsApi.Data;
+using TechBirdsApi.Models;
 
-namespace TechBirdsWebAPI.Services
+namespace TechBirdsApi.Services
 {
     public interface IUserActivityService
     {
@@ -130,7 +130,7 @@ namespace TechBirdsWebAPI.Services
             try
             {
                 var httpContext = _httpContextAccessor.HttpContext;
-                var systemException = new Models.SystemException
+                var systemException = new TechBirdsApi.Models.SystemException
                 {
                     UserId = userId,
                     ExceptionType = ex.GetType().Name,

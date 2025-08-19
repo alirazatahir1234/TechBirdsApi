@@ -1,6 +1,6 @@
-using TechBirdsWebAPI.Data;
-using TechBirdsWebAPI.Models;
-using TechBirdsWebAPI.Services;
+using TechBirdsApi.Data;
+using TechBirdsApi.Models;
+using TechBirdsApi.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
