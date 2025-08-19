@@ -1,0 +1,1167 @@
+{
+  "info": {
+    "name": "TechBirds Web API",
+    "description": "Complete API collection for TechBirds Web Application",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{authToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5001",
+      "type": "string"
+    },
+    {
+      "key": "baseUrlHttps",
+      "value": "https://localhost:7001",
+      "type": "string"
+    },
+    {
+      "key": "authToken",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Admin Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@techbirds.com\",\n  \"password\": \"Admin123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "auth", "login"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('authToken', response.token);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Admin Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"john@example.com\",\n  \"password\": \"Password123!\",\n  \"bio\": \"Software Developer\",\n  \"avatar\": \"https://example.com/avatar.jpg\",\n  \"website\": \"https://johndoe.com\",\n  \"twitter\": \"@johndoe\",\n  \"linkedIn\": \"https://linkedin.com/in/johndoe\",\n  \"specialization\": \"Full Stack Development\",\n  \"role\": \"Admin\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "auth", "register"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users Management",
+      "item": [
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/users?page=1&limit=10&search=&role=&specialization=&sortBy=joined&sortOrder=desc",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "search",
+                  "value": ""
+                },
+                {
+                  "key": "role",
+                  "value": ""
+                },
+                {
+                  "key": "specialization",
+                  "value": ""
+                },
+                {
+                  "key": "sortBy",
+                  "value": "joined"
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "desc"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create User (Admin Only)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Ali\",\n  \"lastName\": \"Raza\",\n  \"email\": \"ali@gmail.com\",\n  \"password\": \"Alisheikh@123\",\n  \"bio\": \"Item boomb\",\n  \"avatar\": \"https://google.com\",\n  \"website\": \"https://google.com\",\n  \"twitter\": \"https://google.com\",\n  \"linkedIn\": \"https://google.com\",\n  \"specialization\": \"Item\",\n  \"role\": \"Admin\",\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users"]
+            }
+          }
+        },
+        {
+          "name": "Get User by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/:userId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", ":userId"],
+              "variable": [
+                {
+                  "key": "userId",
+                  "value": "user-id-here"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Current User Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "profile"]
+            }
+          }
+        },
+        {
+          "name": "Update User Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe Updated\",\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"john.updated@example.com\",\n  \"password\": \"NewPassword123!\",\n  \"bio\": \"Updated bio\",\n  \"avatar\": \"https://example.com/new-avatar.jpg\",\n  \"website\": \"https://johndoe-updated.com\",\n  \"twitter\": \"@johndoe_updated\",\n  \"linkedIn\": \"https://linkedin.com/in/johndoe-updated\",\n  \"specialization\": \"Senior Full Stack Developer\",\n  \"role\": \"Editor\",\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "profile"]
+            }
+          }
+        },
+        {
+          "name": "Get User Activities",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/activities?page=1&limit=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "activities"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "50"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin - User Management",
+      "item": [
+        {
+          "name": "Get All User Activities (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/admin/activities?userId=&page=1&limit=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "admin", "activities"],
+              "query": [
+                {
+                  "key": "userId",
+                  "value": ""
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "50"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get System Exceptions (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/admin/exceptions?userId=&unResolvedOnly=false&page=1&limit=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "admin", "exceptions"],
+              "query": [
+                {
+                  "key": "userId",
+                  "value": ""
+                },
+                {
+                  "key": "unResolvedOnly",
+                  "value": "false"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "50"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Resolve Exception (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resolution\": \"Issue resolved by updating the database schema\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/admin/exceptions/:exceptionId/resolve",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "admin", "exceptions", ":exceptionId", "resolve"],
+              "variable": [
+                {
+                  "key": "exceptionId",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Posts Management",
+      "item": [
+        {
+          "name": "Get All Posts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/posts?page=1&limit=10&category=&search=&sortBy=created&sortOrder=desc",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "posts"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "category",
+                  "value": ""
+                },
+                {
+                  "key": "search",
+                  "value": ""
+                },
+                {
+                  "key": "sortBy",
+                  "value": "created"
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "desc"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Post by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/posts/:postId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "posts", ":postId"],
+              "variable": [
+                {
+                  "key": "postId",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Post by Slug",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/posts/slug/:slug",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "posts", "slug", ":slug"],
+              "variable": [
+                {
+                  "key": "slug",
+                  "value": "sample-post-slug"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin - Posts Management",
+      "item": [
+        {
+          "name": "Get All Posts (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/posts?page=1&limit=10&status=&category=&search=&sortBy=created&sortOrder=desc",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "posts"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "status",
+                  "value": ""
+                },
+                {
+                  "key": "category",
+                  "value": ""
+                },
+                {
+                  "key": "search",
+                  "value": ""
+                },
+                {
+                  "key": "sortBy",
+                  "value": "created"
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "desc"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Post (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Sample Blog Post\",\n  \"slug\": \"sample-blog-post\",\n  \"content\": \"This is the content of the blog post...\",\n  \"excerpt\": \"Brief description of the post\",\n  \"featuredImage\": \"https://example.com/featured-image.jpg\",\n  \"categoryId\": 1,\n  \"tags\": [\"technology\", \"programming\", \"web development\"],\n  \"status\": \"published\",\n  \"metaTitle\": \"Sample Blog Post - TechBirds\",\n  \"metaDescription\": \"A sample blog post about technology\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/posts",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "posts"]
+            }
+          }
+        },
+        {
+          "name": "Get Post by ID (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/posts/:postId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "posts", ":postId"],
+              "variable": [
+                {
+                  "key": "postId",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Post (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated Blog Post Title\",\n  \"slug\": \"updated-blog-post\",\n  \"content\": \"Updated content of the blog post...\",\n  \"excerpt\": \"Updated brief description\",\n  \"featuredImage\": \"https://example.com/updated-image.jpg\",\n  \"categoryId\": 1,\n  \"tags\": [\"technology\", \"programming\", \"updated\"],\n  \"status\": \"published\",\n  \"metaTitle\": \"Updated Blog Post - TechBirds\",\n  \"metaDescription\": \"An updated blog post about technology\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/posts/:postId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "posts", ":postId"],
+              "variable": [
+                {
+                  "key": "postId",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Post (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/posts/:postId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "posts", ":postId"],
+              "variable": [
+                {
+                  "key": "postId",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Categories",
+      "item": [
+        {
+          "name": "Get All Categories",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/categories",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "categories"]
+            }
+          }
+        },
+        {
+          "name": "Get Category by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/categories/:categoryId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "categories", ":categoryId"],
+              "variable": [
+                {
+                  "key": "categoryId",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin - Categories",
+      "item": [
+        {
+          "name": "Get All Categories (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/categories",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "categories"]
+            }
+          }
+        },
+        {
+          "name": "Create Category (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Technology\",\n  \"slug\": \"technology\",\n  \"description\": \"Posts about technology and innovation\",\n  \"color\": \"#007bff\",\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/categories",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "categories"]
+            }
+          }
+        },
+        {
+          "name": "Update Category (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Technology\",\n  \"slug\": \"updated-technology\",\n  \"description\": \"Updated description for technology category\",\n  \"color\": \"#28a745\",\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/categories/:categoryId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "categories", ":categoryId"],
+              "variable": [
+                {
+                  "key": "categoryId",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Category (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/categories/:categoryId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "categories", ":categoryId"],
+              "variable": [
+                {
+                  "key": "categoryId",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Comments",
+      "item": [
+        {
+          "name": "Get Post Comments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/comments/post/:postId?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "comments", "post", ":postId"],
+              "variable": [
+                {
+                  "key": "postId",
+                  "value": "1"
+                }
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Comment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"postId\": 1,\n  \"content\": \"This is a great blog post! Thanks for sharing.\",\n  \"parentId\": null\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/comments",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "comments"]
+            }
+          }
+        },
+        {
+          "name": "Update Comment",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Updated comment content with more details.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/comments/:commentId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "comments", ":commentId"],
+              "variable": [
+                {
+                  "key": "commentId",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Comment",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/comments/:commentId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "comments", ":commentId"],
+              "variable": [
+                {
+                  "key": "commentId",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin - Comments",
+      "item": [
+        {
+          "name": "Get All Comments (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/comments?page=1&limit=10&status=&postId=",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "comments"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "status",
+                  "value": ""
+                },
+                {
+                  "key": "postId",
+                  "value": ""
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Approve Comment (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/comments/:commentId/approve",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "comments", ":commentId", "approve"],
+              "variable": [
+                {
+                  "key": "commentId",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Reject Comment (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/comments/:commentId/reject",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "comments", ":commentId", "reject"],
+              "variable": [
+                {
+                  "key": "commentId",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Search",
+      "item": [
+        {
+          "name": "Search Posts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/search?q=technology&type=posts&page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "search"],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "technology"
+                },
+                {
+                  "key": "type",
+                  "value": "posts"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Search All Content",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/search?q=technology&page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "search"],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "technology"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Newsletter",
+      "item": [
+        {
+          "name": "Subscribe to Newsletter",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"subscriber@example.com\",\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/newsletter/subscribe",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "newsletter", "subscribe"]
+            }
+          }
+        },
+        {
+          "name": "Unsubscribe from Newsletter",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"subscriber@example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/newsletter/unsubscribe",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "newsletter", "unsubscribe"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin - Newsletter",
+      "item": [
+        {
+          "name": "Get All Subscribers (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/newsletter/subscribers?page=1&limit=10&status=active",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "newsletter", "subscribers"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "status",
+                  "value": "active"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Send Newsletter (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"subject\": \"Weekly Tech Newsletter\",\n  \"content\": \"<h1>This week in technology...</h1><p>Content goes here...</p>\",\n  \"scheduledFor\": null\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/newsletter/send",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "newsletter", "send"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin - Dashboard",
+      "item": [
+        {
+          "name": "Get Dashboard Stats",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/dashboard/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "dashboard", "stats"]
+            }
+          }
+        },
+        {
+          "name": "Get Recent Activity",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/dashboard/activity?limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "dashboard", "activity"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Health Check",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "health"]
+            }
+          }
+        },
+        {
+          "name": "Database Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/health/database",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "health", "database"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
