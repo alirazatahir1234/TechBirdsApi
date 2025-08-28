@@ -7,7 +7,7 @@ namespace TechBirdsApi.Controllers
 {
     [Route("api/admin/dashboard")]
     [ApiController]
-    [Authorize(Roles = "Admin")]
+    // [Authorize(Roles = "Admin")]
     public class AdminDashboardController : ControllerBase
     {
         private readonly ApplicationDbContext _context;

@@ -17,7 +17,7 @@ namespace TechBirdsApi.Data
         public DbSet<MediaItem> MediaItems { get; set; }
         public DbSet<Page> Pages { get; set; }
         public DbSet<PageRevision> PageRevisions { get; set; }
-        
+        public DbSet<Settings> Settings { get; set; }
         // 🔐 Logging and Exception Tracking Tables
         public DbSet<UserActivity> UserActivities { get; set; }
         public DbSet<TechBirdsApi.Models.SystemException> SystemExceptions { get; set; }
@@ -245,4 +245,6 @@ namespace TechBirdsApi.Data
             );
         }
     }
+
+  
 }

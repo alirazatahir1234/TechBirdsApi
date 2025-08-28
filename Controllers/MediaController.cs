@@ -49,8 +49,9 @@ namespace TechBirdsApi.Controllers
         [HttpPost("upload")]
         [RequestSizeLimit(104_857_600)] // 100 MB
         [Authorize(Roles = "Author,Editor,Admin,SuperAdmin")]
-        public async Task<IActionResult> Upload([FromForm] IFormFile file, [FromForm] string? title = null, [FromForm] string? altText = null, [FromForm] string? caption = null, [FromForm] string? description = null)
+        public async Task<IActionResult> Upload([FromForm] UploadMediaRequest request)
         {
+            var file = request.File;
             if (file == null || file.Length == 0) return BadRequest(new { message = "No file uploaded" });
 
             var contentType = file.ContentType?.ToLowerInvariant() ?? "";
@@ -93,10 +94,10 @@ namespace TechBirdsApi.Controllers
                 Size = file.Length,
                 Url = urlBase,
                 StoragePath = absPath,
-                Title = title ?? Path.GetFileNameWithoutExtension(file.FileName),
-                AltText = altText,
-                Caption = caption,
-                Description = description,
+                Title = request.Title ?? Path.GetFileNameWithoutExtension(file.FileName),
+                AltText = request.AltText,
+                Caption = request.Caption,
+                Description = request.Description,
                 UploadedByUserId = userId,
             };
 
@@ -133,6 +134,19 @@ namespace TechBirdsApi.Controllers
             await _db.SaveChangesAsync();
 
             return Ok(ToDto(media));
+        }
+        public class UploadMediaRequest
+        {
+            [FromForm]
+            public required IFormFile File { get; set; }
+            [FromForm]
+            public string? Title { get; set; }
+            [FromForm]
+            public string? AltText { get; set; }
+            [FromForm]
+            public string? Caption { get; set; }
+            [FromForm]
+            public string? Description { get; set; }
         }
 
         // GET: api/media - List media with filters and pagination
@@ -246,7 +260,8 @@ namespace TechBirdsApi.Controllers
 
             // Optional: author can edit only their items; admins/editors can edit any
             var userId = _userManager.GetUserId(User);
-            var roles = await _userManager.GetRolesAsync(await _userManager.GetUserAsync(User));
+            var user = await _userManager.GetUserAsync(User);
+            var roles = user != null ? await _userManager.GetRolesAsync(user) : new List<string>();
             bool isAdmin = roles.Any(r => r is "Admin" or "SuperAdmin" or "Editor");
             if (!isAdmin && media.UploadedByUserId != userId)
             {
@@ -272,7 +287,8 @@ namespace TechBirdsApi.Controllers
             if (media == null) return NotFound(new { message = "Media not found" });
 
             var userId = _userManager.GetUserId(User);
-            var roles = await _userManager.GetRolesAsync(await _userManager.GetUserAsync(User));
+            var user = await _userManager.GetUserAsync(User);
+            var roles = user != null ? await _userManager.GetRolesAsync(user) : new List<string>();
             bool isAdmin = roles.Any(r => r is "Admin" or "SuperAdmin" or "Editor");
             if (!isAdmin && media.UploadedByUserId != userId)
             {

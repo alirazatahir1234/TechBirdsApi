@@ -8,7 +8,7 @@ using TechBirdsApi.Data;
 
 #nullable disable
 
-namespace TechBirdsWebApi.Migrations
+namespace TechBirdsApi.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
     partial class ApplicationDbContextModelSnapshot : ModelSnapshot
@@ -128,7 +128,7 @@ namespace TechBirdsWebApi.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("TechBirdsWebAPI.Models.ApplicationRole", b =>
+            modelBuilder.Entity("TechBirdsApi.Models.ApplicationRole", b =>
                 {
                     b.Property<string>("Id")
                         .HasColumnType("text");
@@ -192,7 +192,7 @@ namespace TechBirdsWebApi.Migrations
                         });
                 });
 
-            modelBuilder.Entity("TechBirdsWebAPI.Models.ApplicationUser", b =>
+            modelBuilder.Entity("TechBirdsApi.Models.ApplicationUser", b =>
                 {
                     b.Property<string>("Id")
                         .HasColumnType("text");
@@ -312,7 +312,7 @@ namespace TechBirdsWebApi.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
-            modelBuilder.Entity("TechBirdsWebAPI.Models.Category", b =>
+            modelBuilder.Entity("TechBirdsApi.Models.Category", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -333,7 +333,7 @@ namespace TechBirdsWebApi.Migrations
                     b.ToTable("categories", (string)null);
                 });
 
-            modelBuilder.Entity("TechBirdsWebAPI.Models.Comment", b =>
+            modelBuilder.Entity("TechBirdsApi.Models.Comment", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -374,7 +374,7 @@ namespace TechBirdsWebApi.Migrations
                     b.ToTable("comments", (string)null);
                 });
 
-            modelBuilder.Entity("TechBirdsWebAPI.Models.MediaItem", b =>
+            modelBuilder.Entity("TechBirdsApi.Models.MediaItem", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -466,7 +466,7 @@ namespace TechBirdsWebApi.Migrations
                     b.ToTable("media_items", (string)null);
                 });
 
-            modelBuilder.Entity("TechBirdsWebAPI.Models.Page", b =>
+            modelBuilder.Entity("TechBirdsApi.Models.Page", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -478,7 +478,7 @@ namespace TechBirdsWebApi.Migrations
 
                     b.Property<string>("Content")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("jsonb");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -560,7 +560,7 @@ namespace TechBirdsWebApi.Migrations
                     b.ToTable("pages", (string)null);
                 });
 
-            modelBuilder.Entity("TechBirdsWebAPI.Models.PageRevision", b =>
+            modelBuilder.Entity("TechBirdsApi.Models.PageRevision", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -604,7 +604,7 @@ namespace TechBirdsWebApi.Migrations
                     b.ToTable("page_revisions", (string)null);
                 });
 
-            modelBuilder.Entity("TechBirdsWebAPI.Models.Post", b =>
+            modelBuilder.Entity("TechBirdsApi.Models.Post", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -703,7 +703,53 @@ namespace TechBirdsWebApi.Migrations
                     b.ToTable("posts", (string)null);
                 });
 
-            modelBuilder.Entity("TechBirdsWebAPI.Models.SystemException", b =>
+            modelBuilder.Entity("TechBirdsApi.Models.Settings", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AdminEmail")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("DefaultLanguage")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("EnableRegistration")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("ItemsPerPage")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("LogoUrl")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("MaintenanceMode")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("SiteDescription")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("SiteTitle")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Theme")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Settings");
+                });
+
+            modelBuilder.Entity("TechBirdsApi.Models.SystemException", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -801,7 +847,7 @@ namespace TechBirdsWebApi.Migrations
                     b.ToTable("SystemExceptions");
                 });
 
-            modelBuilder.Entity("TechBirdsWebAPI.Models.UserActivity", b =>
+            modelBuilder.Entity("TechBirdsApi.Models.UserActivity", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -877,7 +923,7 @@ namespace TechBirdsWebApi.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
-                    b.HasOne("TechBirdsWebAPI.Models.ApplicationRole", null)
+                    b.HasOne("TechBirdsApi.Models.ApplicationRole", null)
                         .WithMany()
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -886,7 +932,7 @@ namespace TechBirdsWebApi.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
                 {
-                    b.HasOne("TechBirdsWebAPI.Models.ApplicationUser", null)
+                    b.HasOne("TechBirdsApi.Models.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -895,7 +941,7 @@ namespace TechBirdsWebApi.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
                 {
-                    b.HasOne("TechBirdsWebAPI.Models.ApplicationUser", null)
+                    b.HasOne("TechBirdsApi.Models.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -904,13 +950,13 @@ namespace TechBirdsWebApi.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
                 {
-                    b.HasOne("TechBirdsWebAPI.Models.ApplicationRole", null)
+                    b.HasOne("TechBirdsApi.Models.ApplicationRole", null)
                         .WithMany()
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("TechBirdsWebAPI.Models.ApplicationUser", null)
+                    b.HasOne("TechBirdsApi.Models.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -919,20 +965,20 @@ namespace TechBirdsWebApi.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
                 {
-                    b.HasOne("TechBirdsWebAPI.Models.ApplicationUser", null)
+                    b.HasOne("TechBirdsApi.Models.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("TechBirdsWebAPI.Models.Comment", b =>
+            modelBuilder.Entity("TechBirdsApi.Models.Comment", b =>
                 {
-                    b.HasOne("TechBirdsWebAPI.Models.Post", "Post")
+                    b.HasOne("TechBirdsApi.Models.Post", "Post")
                         .WithMany("Comments")
                         .HasForeignKey("PostId");
 
-                    b.HasOne("TechBirdsWebAPI.Models.ApplicationUser", "User")
+                    b.HasOne("TechBirdsApi.Models.ApplicationUser", "User")
                         .WithMany("Comments")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -943,9 +989,9 @@ namespace TechBirdsWebApi.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("TechBirdsWebAPI.Models.MediaItem", b =>
+            modelBuilder.Entity("TechBirdsApi.Models.MediaItem", b =>
                 {
-                    b.HasOne("TechBirdsWebAPI.Models.ApplicationUser", "UploadedBy")
+                    b.HasOne("TechBirdsApi.Models.ApplicationUser", "UploadedBy")
                         .WithMany()
                         .HasForeignKey("UploadedByUserId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -954,20 +1000,20 @@ namespace TechBirdsWebApi.Migrations
                     b.Navigation("UploadedBy");
                 });
 
-            modelBuilder.Entity("TechBirdsWebAPI.Models.Page", b =>
+            modelBuilder.Entity("TechBirdsApi.Models.Page", b =>
                 {
-                    b.HasOne("TechBirdsWebAPI.Models.ApplicationUser", "Author")
+                    b.HasOne("TechBirdsApi.Models.ApplicationUser", "Author")
                         .WithMany()
                         .HasForeignKey("AuthorId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("TechBirdsWebAPI.Models.MediaItem", "FeaturedMedia")
+                    b.HasOne("TechBirdsApi.Models.MediaItem", "FeaturedMedia")
                         .WithMany()
                         .HasForeignKey("FeaturedMediaId")
                         .OnDelete(DeleteBehavior.SetNull);
 
-                    b.HasOne("TechBirdsWebAPI.Models.Page", "Parent")
+                    b.HasOne("TechBirdsApi.Models.Page", "Parent")
                         .WithMany("Children")
                         .HasForeignKey("ParentId")
                         .OnDelete(DeleteBehavior.Restrict);
@@ -979,15 +1025,15 @@ namespace TechBirdsWebApi.Migrations
                     b.Navigation("Parent");
                 });
 
-            modelBuilder.Entity("TechBirdsWebAPI.Models.PageRevision", b =>
+            modelBuilder.Entity("TechBirdsApi.Models.PageRevision", b =>
                 {
-                    b.HasOne("TechBirdsWebAPI.Models.ApplicationUser", "CreatedBy")
+                    b.HasOne("TechBirdsApi.Models.ApplicationUser", "CreatedBy")
                         .WithMany()
                         .HasForeignKey("CreatedByUserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("TechBirdsWebAPI.Models.Page", "Page")
+                    b.HasOne("TechBirdsApi.Models.Page", "Page")
                         .WithMany("Revisions")
                         .HasForeignKey("PageId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -998,13 +1044,13 @@ namespace TechBirdsWebApi.Migrations
                     b.Navigation("Page");
                 });
 
-            modelBuilder.Entity("TechBirdsWebAPI.Models.Post", b =>
+            modelBuilder.Entity("TechBirdsApi.Models.Post", b =>
                 {
-                    b.HasOne("TechBirdsWebAPI.Models.Category", "Category")
+                    b.HasOne("TechBirdsApi.Models.Category", "Category")
                         .WithMany()
                         .HasForeignKey("CategoryId");
 
-                    b.HasOne("TechBirdsWebAPI.Models.ApplicationUser", "User")
+                    b.HasOne("TechBirdsApi.Models.ApplicationUser", "User")
                         .WithMany("Posts")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1015,18 +1061,18 @@ namespace TechBirdsWebApi.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("TechBirdsWebAPI.Models.SystemException", b =>
+            modelBuilder.Entity("TechBirdsApi.Models.SystemException", b =>
                 {
-                    b.HasOne("TechBirdsWebAPI.Models.ApplicationUser", "User")
+                    b.HasOne("TechBirdsApi.Models.ApplicationUser", "User")
                         .WithMany()
                         .HasForeignKey("UserId");
 
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("TechBirdsWebAPI.Models.UserActivity", b =>
+            modelBuilder.Entity("TechBirdsApi.Models.UserActivity", b =>
                 {
-                    b.HasOne("TechBirdsWebAPI.Models.ApplicationUser", "User")
+                    b.HasOne("TechBirdsApi.Models.ApplicationUser", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1035,21 +1081,21 @@ namespace TechBirdsWebApi.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("TechBirdsWebAPI.Models.ApplicationUser", b =>
+            modelBuilder.Entity("TechBirdsApi.Models.ApplicationUser", b =>
                 {
                     b.Navigation("Comments");
 
                     b.Navigation("Posts");
                 });
 
-            modelBuilder.Entity("TechBirdsWebAPI.Models.Page", b =>
+            modelBuilder.Entity("TechBirdsApi.Models.Page", b =>
                 {
                     b.Navigation("Children");
 
                     b.Navigation("Revisions");
                 });
 
-            modelBuilder.Entity("TechBirdsWebAPI.Models.Post", b =>
+            modelBuilder.Entity("TechBirdsApi.Models.Post", b =>
                 {
                     b.Navigation("Comments");
                 });

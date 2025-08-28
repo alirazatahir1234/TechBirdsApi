@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace TechBirdsApi.Models
 {
@@ -10,6 +11,7 @@ namespace TechBirdsApi.Models
         // Core content
         public string Title { get; set; } = string.Empty;          // Max 200
         public string Slug { get; set; } = string.Empty;           // unique (lowercase, hyphenated)
+       [Column(TypeName = "jsonb")]
         public string Content { get; set; } = string.Empty;        // HTML/Markdown/body
         public string? Excerpt { get; set; }                       // summary
 
