@@ -4,7 +4,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Slugify;
 using TechBirdsApi.Data;
+using TechBirdsApi.Dto;
 using TechBirdsApi.Models;
+using TechBirdsApi.Repositories;
+using TechBirdsApi.Services;
 
 namespace TechBirdsApi.Controllers
 {
@@ -12,47 +15,22 @@ namespace TechBirdsApi.Controllers
     [Route("api/[controller]")]
     public class PagesController : ControllerBase
     {
-        private readonly ApplicationDbContext _db;
+        private readonly IPageService _pageService;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly ISlugHelper _slugger;
 
-        public PagesController(ApplicationDbContext db, UserManager<ApplicationUser> userManager)
+        public PagesController(IPageService pageService, UserManager<ApplicationUser> userManager)
         {
-            _db = db;
+            _pageService = pageService;
             _userManager = userManager;
             _slugger = new SlugHelper();
         }
 
         // DTOs
-        public class PageCreateRequest
-        {
-            public string Title { get; set; } = string.Empty;
-            public string Content { get; set; } = string.Empty;
-            public string? Excerpt { get; set; }
-            public string? Status { get; set; } = "draft"; // draft|published|private
-            public Guid? ParentId { get; set; }
-            public int? MenuOrder { get; set; }
-            public string? Template { get; set; }
-            public Guid? FeaturedMediaId { get; set; }
-            public string? SeoTitle { get; set; }
-            public string? SeoDescription { get; set; }
-            public string? MetaJson { get; set; }
-            public string? Slug { get; set; } // optional, will be generated if empty
-            public string? ChangeSummary { get; set; }
-        }
-
+        
         public class PageUpdateRequest : PageCreateRequest { }
 
-        public class PageQuery
-        {
-            public int Page { get; set; } = 1;
-            public int Limit { get; set; } = 20;
-            public string? Search { get; set; }
-            public string? Status { get; set; } // draft|published|private
-            public Guid? ParentId { get; set; }
-            public string? SortBy { get; set; } = "created"; // created|updated|title|menu
-            public string? SortOrder { get; set; } = "desc"; // asc|desc
-        }
+      
 
         // Helpers
         private async Task<string> GenerateUniqueSlugAsync(string titleOrSlug, Guid? ignoreId = null)
@@ -61,7 +39,7 @@ namespace TechBirdsApi.Controllers
             if (string.IsNullOrWhiteSpace(baseSlug)) baseSlug = Guid.NewGuid().ToString("N").Substring(0, 8);
             var slug = baseSlug;
             int i = 1;
-            while (await _db.Pages.AnyAsync(p => p.Slug == slug && (!ignoreId.HasValue || p.Id != ignoreId.Value)))
+            while (await _pageService.GetBySlugAsync(slug) is not null && (!ignoreId.HasValue || (await _pageService.GetBySlugAsync(slug))?.Id != ignoreId.Value))
             {
                 slug = $"{baseSlug}-{i++}";
             }
@@ -99,7 +77,6 @@ namespace TechBirdsApi.Controllers
             if (userId is null) return Unauthorized();
 
             var slug = string.IsNullOrWhiteSpace(req.Slug) ? await GenerateUniqueSlugAsync(req.Title) : await GenerateUniqueSlugAsync(req.Slug);
-
             var now = DateTime.UtcNow;
             var page = new Page
             {
@@ -120,29 +97,7 @@ namespace TechBirdsApi.Controllers
                 CreatedAt = now
             };
 
-            // Parent guard (optional)
-            if (page.ParentId.HasValue && !await _db.Pages.AnyAsync(p => p.Id == page.ParentId.Value))
-            {
-                return BadRequest(new { message = "Parent page not found" });
-            }
-
-            // Create initial revision
-            var rev = new PageRevision
-            {
-                Page = page,
-                Version = 1,
-                Title = page.Title,
-                Content = page.Content,
-                Excerpt = page.Excerpt,
-                ChangeSummary = req.ChangeSummary ?? "Initial version",
-                CreatedByUserId = userId,
-                CreatedAt = now
-            };
-
-            _db.Pages.Add(page);
-            _db.PageRevisions.Add(rev);
-            await _db.SaveChangesAsync();
-
+            await _pageService.AddAsync(page);
             return Ok(ToDto(page));
         }
 
@@ -151,17 +106,19 @@ namespace TechBirdsApi.Controllers
         [Authorize(Roles = "Author,Editor,Admin,SuperAdmin")]
         public async Task<IActionResult> Update(Guid id, [FromBody] PageUpdateRequest req)
         {
-            var page = await _db.Pages.FirstOrDefaultAsync(p => p.Id == id && !p.IsDeleted);
+            var page = await _pageService.GetByIdAsync(id);
             if (page == null) return NotFound(new { message = "Page not found" });
 
             var userId = _userManager.GetUserId(User);
-            var roles = await _userManager.GetRolesAsync(await _userManager.GetUserAsync(User));
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return Unauthorized();
+            var roles = await _userManager.GetRolesAsync(user);
             bool isEditor = roles.Any(r => r is "Editor" or "Admin" or "SuperAdmin");
             if (!isEditor && page.AuthorId != userId) return Forbid();
 
             if (!string.IsNullOrWhiteSpace(req.Slug) && req.Slug != page.Slug)
             {
-                page.Slug = await GenerateUniqueSlugAsync(req.Slug, id);
+                page.Slug = _slugger.GenerateSlug(req.Slug);
             }
 
             var now = DateTime.UtcNow;
@@ -182,23 +139,7 @@ namespace TechBirdsApi.Controllers
             page.MetaJson = req.MetaJson ?? page.MetaJson;
             page.UpdatedAt = now;
 
-            // Create new revision
-            var nextVersion = (await _db.PageRevisions.Where(r => r.PageId == id).MaxAsync(r => (int?)r.Version)) + 1 ?? 1;
-            var rev = new PageRevision
-            {
-                PageId = id,
-                Version = nextVersion,
-                Title = page.Title,
-                Content = page.Content,
-                Excerpt = page.Excerpt,
-                ChangeSummary = req.ChangeSummary ?? "Updated",
-                CreatedByUserId = userId!,
-                CreatedAt = now
-            };
-
-            _db.PageRevisions.Add(rev);
-            await _db.SaveChangesAsync();
-
+            await _pageService.UpdateAsync(page);
             return Ok(ToDto(page));
         }
 
@@ -206,7 +147,7 @@ namespace TechBirdsApi.Controllers
         [HttpGet("{id:guid}")]
         public async Task<IActionResult> Get(Guid id)
         {
-            var page = await _db.Pages.AsNoTracking().FirstOrDefaultAsync(p => p.Id == id && !p.IsDeleted);
+            var page = await _pageService.GetByIdAsync(id);
             if (page == null) return NotFound(new { message = "Page not found" });
             return Ok(ToDto(page));
         }
@@ -216,12 +157,7 @@ namespace TechBirdsApi.Controllers
         public async Task<IActionResult> GetBySlug(string slug)
         {
             var isAuthed = User?.Identity != null && User.Identity.IsAuthenticated;
-            var query = _db.Pages.AsNoTracking().Where(p => p.Slug == slug && !p.IsDeleted);
-            if (!isAuthed)
-            {
-                query = query.Where(p => p.Status == "published");
-            }
-            var page = await query.FirstOrDefaultAsync();
+            var page = await _pageService.GetBySlugAsync(slug, onlyPublished: !isAuthed);
             if (page == null) return NotFound(new { message = "Page not found" });
             return Ok(ToDto(page));
         }
@@ -230,32 +166,8 @@ namespace TechBirdsApi.Controllers
         [HttpGet]
         public async Task<IActionResult> List([FromQuery] PageQuery q)
         {
-            var query = _db.Pages.AsNoTracking().Where(p => !p.IsDeleted);
-
-            if (!string.IsNullOrWhiteSpace(q.Search))
-            {
-                query = query.Where(p => p.Title.Contains(q.Search) || (p.Excerpt != null && p.Excerpt.Contains(q.Search)) || p.Content.Contains(q.Search));
-            }
-            if (!string.IsNullOrWhiteSpace(q.Status))
-            {
-                query = query.Where(p => p.Status == q.Status);
-            }
-            if (q.ParentId.HasValue)
-            {
-                query = query.Where(p => p.ParentId == q.ParentId);
-            }
-
-            query = q.SortBy?.ToLower() switch
-            {
-                "updated" => q.SortOrder == "asc" ? query.OrderBy(p => p.UpdatedAt) : query.OrderByDescending(p => p.UpdatedAt),
-                "title" => q.SortOrder == "asc" ? query.OrderBy(p => p.Title) : query.OrderByDescending(p => p.Title),
-                "menu" => q.SortOrder == "asc" ? query.OrderBy(p => p.MenuOrder) : query.OrderByDescending(p => p.MenuOrder),
-                _ => q.SortOrder == "asc" ? query.OrderBy(p => p.CreatedAt) : query.OrderByDescending(p => p.CreatedAt)
-            };
-
-            var total = await query.CountAsync();
-            var items = await query.Skip((q.Page - 1) * q.Limit).Take(q.Limit).ToListAsync();
-
+                var items = await _pageService.FilterAsync(q);
+            var total = await _pageService.CountAsync(q.Search, q.Status, q.ParentId);
             return Ok(new
             {
                 items = items.Select(ToDto),
@@ -268,12 +180,12 @@ namespace TechBirdsApi.Controllers
         [Authorize(Roles = "Editor,Admin,SuperAdmin")]
         public async Task<IActionResult> Delete(Guid id)
         {
-            var page = await _db.Pages.FirstOrDefaultAsync(p => p.Id == id && !p.IsDeleted);
+            var page = await _pageService.GetByIdAsync(id);
             if (page == null) return NotFound(new { message = "Page not found" });
 
             page.IsDeleted = true;
             page.DeletedAt = DateTime.UtcNow;
-            await _db.SaveChangesAsync();
+            await _pageService.UpdateAsync(page);
             return Ok(new { message = "Page moved to trash" });
         }
 
@@ -282,12 +194,9 @@ namespace TechBirdsApi.Controllers
         [Authorize(Roles = "Admin,SuperAdmin")]
         public async Task<IActionResult> HardDelete(Guid id)
         {
-            var page = await _db.Pages.Include(p => p.Revisions).FirstOrDefaultAsync(p => p.Id == id);
+            var page = await _pageService.GetByIdAsync(id);
             if (page == null) return NotFound(new { message = "Page not found" });
-
-            _db.PageRevisions.RemoveRange(page.Revisions);
-            _db.Pages.Remove(page);
-            await _db.SaveChangesAsync();
+            await _pageService.DeleteAsync(id);
             return Ok(new { message = "Page permanently deleted" });
         }
 
@@ -296,10 +205,7 @@ namespace TechBirdsApi.Controllers
         [Authorize(Roles = "Author,Editor,Admin,SuperAdmin")]
         public async Task<IActionResult> Revisions(Guid id)
         {
-            var revs = await _db.PageRevisions.AsNoTracking()
-                .Where(r => r.PageId == id)
-                .OrderByDescending(r => r.Version)
-                .ToListAsync();
+            var revs = await _pageService.GetRevisionsAsync(id);
             return Ok(revs.Select(r => new
             {
                 id = r.Id,
@@ -317,11 +223,11 @@ namespace TechBirdsApi.Controllers
         [Authorize(Roles = "Author,Editor,Admin,SuperAdmin")]
         public async Task<IActionResult> Restore(Guid id, Guid revisionId)
         {
-            var page = await _db.Pages.FirstOrDefaultAsync(p => p.Id == id && !p.IsDeleted);
+            var page = await _pageService.GetByIdAsync(id);
             if (page == null) return NotFound(new { message = "Page not found" });
 
-            var rev = await _db.PageRevisions.AsNoTracking().FirstOrDefaultAsync(r => r.Id == revisionId && r.PageId == id);
-            if (rev == null) return NotFound(new { message = "Revision not found" });
+            var rev = await _pageService.GetRevisionAsync(revisionId);
+            if (rev == null || rev.PageId != id) return NotFound(new { message = "Revision not found" });
 
             var userId = _userManager.GetUserId(User);
             var now = DateTime.UtcNow;
@@ -330,7 +236,7 @@ namespace TechBirdsApi.Controllers
             page.Excerpt = rev.Excerpt;
             page.UpdatedAt = now;
 
-            var nextVersion = (await _db.PageRevisions.Where(r => r.PageId == id).MaxAsync(r => (int?)r.Version)) + 1 ?? 1;
+            var nextVersion = await _pageService.GetNextRevisionVersionAsync(id);
             var newRev = new PageRevision
             {
                 PageId = id,
@@ -343,8 +249,8 @@ namespace TechBirdsApi.Controllers
                 CreatedAt = now
             };
 
-            _db.PageRevisions.Add(newRev);
-            await _db.SaveChangesAsync();
+            await _pageService.AddRevisionAsync(newRev);
+            await _pageService.UpdateAsync(page);
             return Ok(ToDto(page));
         }
     }
