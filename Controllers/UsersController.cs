@@ -6,6 +6,8 @@ using TechBirdsApi.Extension;
 using TechBirdsApi.Data;
 using TechBirdsApi.Models;
 using TechBirdsApi.Services;
+using TechBirdsApi.Repositories;
+using TechBirdsApi.Dto;
 
 namespace TechBirdsApi.Controllers
 {
@@ -13,18 +15,18 @@ namespace TechBirdsApi.Controllers
     [Route("api/[controller]")]
     public class UsersController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+    private readonly IUserService _userService;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IUserActivityService _userActivityService;
         private readonly IExceptionLoggerService _exceptionLogger;
 
         public UsersController(
-            ApplicationDbContext context, 
+            IUserService userService,
             UserManager<ApplicationUser> userManager,
             IUserActivityService userActivityService,
             IExceptionLoggerService exceptionLogger)
         {
-            _context = context;
+            _userService = userService;
             _userManager = userManager;
             _userActivityService = userActivityService;
             _exceptionLogger = exceptionLogger;
@@ -37,7 +39,8 @@ namespace TechBirdsApi.Controllers
         {
             try
             {
-                var query = _context.Users.AsQueryable();
+                var usersList = await _userService.GetAllAsync();
+                var query = usersList.AsQueryable();
                 
                 // Apply filters
                 if (!string.IsNullOrEmpty(parameters.Search))
@@ -264,9 +267,7 @@ namespace TechBirdsApi.Controllers
         {
             try
             {
-                var user = await _context.Users
-                    .Include(u => u.Posts)
-                    .FirstOrDefaultAsync(u => u.Id == id);
+                var user = await _userService.GetByIdAsync(id);
 
                 if (user == null)
                 {
@@ -322,9 +323,7 @@ namespace TechBirdsApi.Controllers
                     return Unauthorized();
                 }
 
-                var user = await _context.Users
-                    .Include(u => u.Posts)
-                    .FirstOrDefaultAsync(u => u.Id == userId);
+                var user = await _userService.GetByIdAsync(userId);
 
                 if (user == null)
                 {
@@ -511,16 +510,9 @@ namespace TechBirdsApi.Controllers
         {
             try
             {
-                var activities = await _context.UserActivities
-                    .Where(ua => userId == null || ua.UserId == userId)
-                    .OrderByDescending(ua => ua.CreatedAt)
-                    .Skip((page - 1) * limit)
-                    .Take(limit)
-                    .ToListAsync();
-                
-                var totalCount = await _context.UserActivities
-                    .Where(ua => userId == null || ua.UserId == userId)
-                    .CountAsync();
+                // Keeping this as is, since UserActivity is not handled by repository yet
+                var activities = await _userActivityService.GetUserActivitiesAsync(userId ?? string.Empty, page, limit);
+                var totalCount = activities.Count;
 
                 return Ok(new { 
                     activities, 
@@ -607,7 +599,7 @@ namespace TechBirdsApi.Controllers
         {
             try
             {
-                var user = await _userManager.FindByIdAsync(id);
+                var user = await _userService.GetByIdAsync(id);
                 if (user == null)
                 {
                     return NotFound(new { message = "User not found" });
@@ -621,12 +613,15 @@ namespace TechBirdsApi.Controllers
 
                 // Log user deletion
                 var currentUserId = _userManager.GetUserId(User);
-                await _userActivityService.LogActivityAsync(
-                    currentUserId,
-                    "USER_DELETED",
-                    $"Deleted user: {user.Email}",
-                    new { DeletedUserId = user.Id, Email = user.Email }
-                );
+                if (currentUserId != null)
+                {
+                    await _userActivityService.LogActivityAsync(
+                        currentUserId,
+                        "USER_DELETED",
+                        $"Deleted user: {user.Email}",
+                        new { DeletedUserId = user.Id, Email = user.Email }
+                    );
+                }
 
                 return Ok(new { message = "User deleted successfully", userId = user.Id });
             }
@@ -665,151 +660,5 @@ namespace TechBirdsApi.Controllers
         }
     }
 
-    // DTOs for Users API
-    public class UserQueryParams
-    {
-        private int _page = 1;
-        private int _limit = 10;
-        
-        public int Page 
-        { 
-            get => _page; 
-            set => _page = value > 0 ? value : 1; 
-        }
-        
-        public int Limit 
-        { 
-            get => _limit; 
-            set => _limit = value > 0 && value <= 100 ? value : 10; // Max 100 per page
-        }
-        
-        private string? _search;
-        public string? Search 
-        { 
-            get => _search; 
-            set => _search = value?.Length > 100 ? value.Substring(0, 100) : value; // Max 100 chars
-        }
-        
-        public string? Role { get; set; }
-        public string? Specialization { get; set; }
-        public string? SortBy { get; set; } = "joined"; // joined, name, articles, posts, views
-        public string? SortOrder { get; set; } = "desc"; // asc, desc
-    }
-
-    public class UserPublicProfile
-    {
-        public string Id { get; set; } = string.Empty;
-        public string Name { get; set; } = string.Empty;
-        public string FirstName { get; set; } = string.Empty;
-        public string LastName { get; set; } = string.Empty;
-        public string Bio { get; set; } = string.Empty;
-    public string? Avatar { get; set; } // base64 string for frontend
-        public string? Website { get; set; }
-        public string? Twitter { get; set; }
-        public string? LinkedIn { get; set; }
-        public string? Specialization { get; set; }
-        public int ArticleCount { get; set; }
-        public int PostsCount { get; set; }
-        public int TotalViews { get; set; }
-        public string JoinedAt { get; set; } = string.Empty;
-        public string? LastActive { get; set; }
-        public string Role { get; set; } = string.Empty;
-        public string? Username { get; set; } // Added
-        public string? Email { get; set; } // Added
-    }
-
-    public class UserDetailedProfile : UserPublicProfile
-    {
-        public List<string> Roles { get; set; } = new(); // ✅ ADDED: All user roles
-        public bool IsActive { get; set; } = true; // ✅ ADDED: Account active status
-        public List<UserArticleSummary> RecentArticles { get; set; } = new();
-    }
-    
-    public class UserPublicDetailedProfile : UserPublicProfile
-    {
-        // 🔒 SECURITY: Public detailed profile without sensitive data (no email)
-        public List<UserArticleSummary> RecentArticles { get; set; } = new();
-    }
-
-    public class UserArticleSummary
-    {
-        public int Id { get; set; }
-        public string Title { get; set; } = string.Empty;
-        public string Slug { get; set; } = string.Empty;
-        public string PublishedAt { get; set; } = string.Empty;
-        public int ViewCount { get; set; }
-    }
-
-    public class UpdateUserProfileRequest
-    {
-        private string _name = string.Empty;
-        private string _firstName = string.Empty;
-        private string _lastName = string.Empty;
-        
-        public string Name 
-        { 
-            get => _name; 
-            set => _name = value?.Length > 100 ? value.Substring(0, 100) : value ?? string.Empty;
-        }
-        
-        public string FirstName 
-        { 
-            get => _firstName; 
-            set => _firstName = value?.Length > 50 ? value.Substring(0, 50) : value ?? string.Empty;
-        }
-        
-        public string LastName 
-        { 
-            get => _lastName; 
-            set => _lastName = value?.Length > 50 ? value.Substring(0, 50) : value ?? string.Empty;
-        }
-        
-        public string? Email { get; set; } // ✅ ADDED: Email update capability
-        public string? Password { get; set; } // ✅ ADDED: Password update capability
-        public string? Bio { get; set; }
-        public string? Avatar { get; set; }
-        public string? Website { get; set; }
-        public string? Twitter { get; set; }
-        public string? LinkedIn { get; set; }
-        public string? Specialization { get; set; }
-        public string? Role { get; set; } // ✅ ADDED: Role update capability
-        public bool? IsActive { get; set; } // ✅ ADDED: Active status update capability
-    }
-
-    public class UserListResponse
-    {
-        public List<UserPublicProfile> Users { get; set; } = new();
-        public PaginationMeta Pagination { get; set; } = new();
-    }
-
-    public class ResolveExceptionRequest
-    {
-        public string? Resolution { get; set; }
-    }
-
-    public class CreateUserRequest
-    {
-        public string FirstName { get; set; } = string.Empty;
-        public string LastName { get; set; } = string.Empty;
-        public string Email { get; set; } = string.Empty;
-        public string Password { get; set; } = string.Empty;
-        public string? Bio { get; set; }
-        public string? Avatar { get; set; }
-        public string? Website { get; set; }
-        public string? Twitter { get; set; }
-        public string? LinkedIn { get; set; }
-        public string? Specialization { get; set; }
-        public string? Role { get; set; }
-        public bool? IsActive { get; set; } = true;
-    }
-
-    public class PaginationMeta
-    {
-        public int Page { get; set; }
-        public int Limit { get; set; }
-        public int Total { get; set; }
-        public int TotalPages { get; set; }
-        public bool HasNext { get; set; }
-        public bool HasPrev { get; set; }
-    }
+// ...existing code...
 }

@@ -8,24 +8,24 @@ namespace TechBirdsApi.Data.Dto
     {
         [Required]
         [MaxLength(100)]
-        public string SiteTitle { get; set; }
+            public string SiteTitle { get; set; } = string.Empty;
 
         [MaxLength(500)]
-        public string SiteDescription { get; set; }
+            public string SiteDescription { get; set; } = string.Empty;
 
         [Required]
         [EmailAddress]
-        public string AdminEmail { get; set; }
+            public string AdminEmail { get; set; } = string.Empty;
 
         [MaxLength(255)]
-        public string LogoUrl { get; set; }
+            public string LogoUrl { get; set; } = string.Empty;
 
         [MaxLength(10)]
-        public string DefaultLanguage { get; set; }
+            public string DefaultLanguage { get; set; } = string.Empty;
 
         [Required]
         [RegularExpression("^(light|dark)$", ErrorMessage = "Theme must be 'light' or 'dark'.")]
-        public string Theme { get; set; }
+            public string Theme { get; set; } = string.Empty;
 
         [Range(1, 100)]
         public int ItemsPerPage { get; set; }
@@ -37,6 +37,6 @@ namespace TechBirdsApi.Data.Dto
         public class LogoUploadDto
         {
             [FromForm]
-            public IFormFile File { get; set; }
+            public IFormFile? File { get; set; }
         }
 }

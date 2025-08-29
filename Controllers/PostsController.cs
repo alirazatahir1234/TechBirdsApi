@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TechBirdsApi.Data;
 using TechBirdsApi.Models;
+using TechBirdsApi.Repositories;
+using TechBirdsApi.Services;
 
 namespace TechBirdsApi.Controllers
 {
@@ -10,11 +12,11 @@ namespace TechBirdsApi.Controllers
     [Route("api/[controller]")]
     public class PostsController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IPostService _postService;
 
-        public PostsController(ApplicationDbContext context)
+        public PostsController(IPostService postService)
         {
-            _context = context;
+            _postService = postService;
         }
 
         // GET: api/posts
@@ -32,56 +34,31 @@ namespace TechBirdsApi.Controllers
         {
             try
             {
-                var query = _context.Posts
-                    .Include(p => p.User)
-                    .Include(p => p.Category)
-                    .AsQueryable();
-
+                var posts = await _postService.GetAllAsync();
                 // Apply filters
+                var filtered = posts.AsQueryable();
                 if (!string.IsNullOrEmpty(status))
-                {
-                    query = query.Where(p => p.Status == status);
-                }
-
+                    filtered = filtered.Where(p => p.Status == status);
                 if (!string.IsNullOrEmpty(type))
-                {
-                    query = query.Where(p => p.Type == type);
-                }
-
+                    filtered = filtered.Where(p => p.Type == type);
                 if (featured.HasValue)
-                {
-                    query = query.Where(p => p.Featured == featured.Value);
-                }
-
+                    filtered = filtered.Where(p => p.Featured == featured.Value);
                 if (UserId.HasValue)
-                {
-                    query = query.Where(p => p.UserId == UserId.Value.ToString());
-                }
-
+                    filtered = filtered.Where(p => p.UserId == UserId.Value.ToString());
                 if (categoryId.HasValue)
-                {
-                    query = query.Where(p => p.CategoryId == categoryId.Value);
-                }
-
+                    filtered = filtered.Where(p => p.CategoryId == categoryId.Value);
                 if (!string.IsNullOrEmpty(search))
-                {
-                    query = query.Where(p => p.Title.Contains(search) || p.Content.Contains(search) || (p.Summary != null && p.Summary.Contains(search)));
-                }
-
+                    filtered = filtered.Where(p => p.Title.Contains(search) || p.Content.Contains(search) || (p.Summary != null && p.Summary.Contains(search)));
                 if (!string.IsNullOrEmpty(tags))
-                {
-                    query = query.Where(p => p.Tags != null && p.Tags.Contains(tags));
-                }
-
-                // Get total count
-                var totalCount = await query.CountAsync();
-
-                // Apply pagination and ordering (latest first for posts)
-                var posts = await query
-                    .OrderByDescending(p => p.CreatedAt)
+                    filtered = filtered.Where(p => p.Tags != null && p.Tags.Contains(tags));
+                var totalCount = filtered.Count();
+                var paged = filtered.OrderByDescending(p => p.CreatedAt)
                     .Skip((page - 1) * pageSize)
                     .Take(pageSize)
-                    .Select(p => new PostResponse
+                    .ToList();
+                var response = new PostsListResponse
+                {
+                    Posts = paged.Select(p => new PostResponse
                     {
                         Id = p.Id,
                         Title = p.Title,
@@ -89,7 +66,7 @@ namespace TechBirdsApi.Controllers
                         Summary = p.Summary,
                         ImageUrl = p.ImageUrl,
                         UserId = p.UserId,
-                        UserName = p.User.UserName != null ? $"{p.User.FirstName} {p.User.LastName}".Trim() : "",
+                        UserName = p.User != null ? $"{p.User.FirstName} {p.User.LastName}".Trim() : "",
                         CategoryId = p.CategoryId,
                         CategoryName = p.Category != null ? p.Category.Name : null,
                         Tags = p.Tags,
@@ -105,18 +82,12 @@ namespace TechBirdsApi.Controllers
                         ShareCount = p.ShareCount,
                         ExternalUrl = p.ExternalUrl,
                         ExternalSource = p.ExternalSource
-                    })
-                    .ToListAsync();
-
-                var response = new PostsListResponse
-                {
-                    Posts = posts,
+                    }).ToList(),
                     TotalCount = totalCount,
                     Page = page,
                     PageSize = pageSize,
                     TotalPages = (int)Math.Ceiling((double)totalCount / pageSize)
                 };
-
                 return Ok(response);
             }
             catch (Exception ex)
@@ -131,10 +102,8 @@ namespace TechBirdsApi.Controllers
         {
             try
             {
-                var posts = await _context.Posts
-                    .Include(p => p.User)
-                    .Include(p => p.Category)
-                    .Where(p => p.Status == "published" && p.Featured)
+                var posts = await _postService.GetAllAsync();
+                var featuredPosts = posts.Where(p => p.Status == "published" && p.Featured)
                     .OrderByDescending(p => p.CreatedAt)
                     .Take(limit)
                     .Select(p => new PostResponse
@@ -161,10 +130,8 @@ namespace TechBirdsApi.Controllers
                         ShareCount = p.ShareCount,
                         ExternalUrl = p.ExternalUrl,
                         ExternalSource = p.ExternalSource
-                    })
-                    .ToListAsync();
-
-                return Ok(posts);
+                    }).ToList();
+                return Ok(featuredPosts);
             }
             catch (Exception ex)
             {
@@ -178,10 +145,8 @@ namespace TechBirdsApi.Controllers
         {
             try
             {
-                var posts = await _context.Posts
-                    .Include(p => p.User)
-                    .Include(p => p.Category)
-                    .Where(p => p.Status == "published")
+                var posts = await _postService.GetAllAsync();
+                var recentPosts = posts.Where(p => p.Status == "published")
                     .OrderByDescending(p => p.CreatedAt)
                     .Take(limit)
                     .Select(p => new PostResponse
@@ -208,10 +173,8 @@ namespace TechBirdsApi.Controllers
                         ShareCount = p.ShareCount,
                         ExternalUrl = p.ExternalUrl,
                         ExternalSource = p.ExternalSource
-                    })
-                    .ToListAsync();
-
-                return Ok(posts);
+                    }).ToList();
+                return Ok(recentPosts);
             }
             catch (Exception ex)
             {
@@ -225,55 +188,43 @@ namespace TechBirdsApi.Controllers
         {
             try
             {
-                var post = await _context.Posts
-                    .Include(p => p.User)
-                    .Include(p => p.Category)
-                    .Where(p => p.Id == id)
-                    .Select(p => new PostResponse
-                    {
-                        Id = p.Id,
-                        Title = p.Title,
-                        Content = p.Content,
-                        Summary = p.Summary,
-                        ImageUrl = p.ImageUrl,
-                        UserId = p.UserId,
-                        UserName = p.User.UserName != null ? $"{p.User.FirstName} {p.User.LastName}".Trim() : "",
-                        CategoryId = p.CategoryId,
-                        CategoryName = p.Category != null ? p.Category.Name : null,
-                        Tags = p.Tags,
-                        PublishedAt = p.PublishedAt,
-                        CreatedAt = p.CreatedAt,
-                        UpdatedAt = p.UpdatedAt,
-                        Type = p.Type,
-                        Status = p.Status,
-                        Featured = p.Featured,
-                        AllowComments = p.AllowComments,
-                        ViewCount = p.ViewCount,
-                        LikeCount = p.LikeCount,
-                        ShareCount = p.ShareCount,
-                        ExternalUrl = p.ExternalUrl,
-                        ExternalSource = p.ExternalSource
-                    })
-                    .FirstOrDefaultAsync();
-
+                var post = await _postService.GetByIdAsync(new Guid(id.ToString()));
                 if (post == null)
                 {
                     return NotFound(new { message = "Post not found." });
                 }
-
                 // Increment view count for published posts
                 if (post.Status == "published")
                 {
-                    var postEntity = await _context.Posts.FindAsync(id);
-                    if (postEntity != null)
-                    {
-                        postEntity.ViewCount++;
-                        await _context.SaveChangesAsync();
-                        post.ViewCount = postEntity.ViewCount;
-                    }
+                    post.ViewCount++;
+                    await _postService.UpdateAsync(post);
                 }
-
-                return Ok(post);
+                var response = new PostResponse
+                {
+                    Id = post.Id,
+                    Title = post.Title,
+                    Content = post.Content,
+                    Summary = post.Summary,
+                    ImageUrl = post.ImageUrl,
+                    UserId = post.UserId,
+                    UserName = post.User != null ? $"{post.User.FirstName} {post.User.LastName}".Trim() : "",
+                    CategoryId = post.CategoryId,
+                    CategoryName = post.Category != null ? post.Category.Name : null,
+                    Tags = post.Tags,
+                    PublishedAt = post.PublishedAt,
+                    CreatedAt = post.CreatedAt,
+                    UpdatedAt = post.UpdatedAt,
+                    Type = post.Type,
+                    Status = post.Status,
+                    Featured = post.Featured,
+                    AllowComments = post.AllowComments,
+                    ViewCount = post.ViewCount,
+                    LikeCount = post.LikeCount,
+                    ShareCount = post.ShareCount,
+                    ExternalUrl = post.ExternalUrl,
+                    ExternalSource = post.ExternalSource
+                };
+                return Ok(response);
             }
             catch (Exception ex)
             {
@@ -287,15 +238,13 @@ namespace TechBirdsApi.Controllers
         {
             try
             {
-                var post = await _context.Posts.FindAsync(id);
+                var post = await _postService.GetByIdAsync(new Guid(id.ToString()));
                 if (post == null)
                 {
                     return NotFound(new { message = "Post not found." });
                 }
-
                 post.LikeCount++;
-                await _context.SaveChangesAsync();
-
+                await _postService.UpdateAsync(post);
                 return Ok(new { message = "Post liked successfully.", likeCount = post.LikeCount });
             }
             catch (Exception ex)
@@ -310,15 +259,13 @@ namespace TechBirdsApi.Controllers
         {
             try
             {
-                var post = await _context.Posts.FindAsync(id);
+                var post = await _postService.GetByIdAsync(new Guid(id.ToString()));
                 if (post == null)
                 {
                     return NotFound(new { message = "Post not found." });
                 }
-
                 post.ShareCount++;
-                await _context.SaveChangesAsync();
-
+                await _postService.UpdateAsync(post);
                 return Ok(new { message = "Post shared successfully.", shareCount = post.ShareCount });
             }
             catch (Exception ex)
@@ -348,7 +295,7 @@ namespace TechBirdsApi.Controllers
                     CategoryId = request.CategoryId,
                     Tags = request.Tags,
                     Type = request.Type ?? "update",
-                    Status = request.Status ?? "draft", // Default to draft
+                    Status = request.Status ?? "draft",
                     Featured = request.Featured,
                     AllowComments = request.AllowComments,
                     ExternalUrl = request.ExternalUrl,
@@ -356,43 +303,36 @@ namespace TechBirdsApi.Controllers
                     CreatedAt = DateTime.UtcNow,
                     PublishedAt = request.Status == "published" ? DateTime.UtcNow : null
                 };
-
-                _context.Posts.Add(post);
-                await _context.SaveChangesAsync();
-
-                // Fetch the created post with related data
-                var createdPost = await _context.Posts
-                    .Include(p => p.User)
-                    .Include(p => p.Category)
-                    .Where(p => p.Id == post.Id)
-                    .Select(p => new PostResponse
-                    {
-                        Id = p.Id,
-                        Title = p.Title,
-                        Content = p.Content,
-                        Summary = p.Summary,
-                        ImageUrl = p.ImageUrl,
-                        UserId = p.UserId,
-                        UserName = p.User != null ? $"{p.User.FirstName} {p.User.LastName}".Trim() : "",
-                        CategoryId = p.CategoryId,
-                        CategoryName = p.Category != null ? p.Category.Name : null,
-                        Tags = p.Tags,
-                        PublishedAt = p.PublishedAt,
-                        CreatedAt = p.CreatedAt,
-                        UpdatedAt = p.UpdatedAt,
-                        Type = p.Type,
-                        Status = p.Status,
-                        Featured = p.Featured,
-                        AllowComments = p.AllowComments,
-                        ViewCount = p.ViewCount,
-                        LikeCount = p.LikeCount,
-                        ShareCount = p.ShareCount,
-                        ExternalUrl = p.ExternalUrl,
-                        ExternalSource = p.ExternalSource
-                    })
-                    .FirstOrDefaultAsync();
-
-                return CreatedAtAction(nameof(GetPost), new { id = post.Id }, createdPost);
+                await _postService.AddAsync(post);
+                var createdPost = await _postService.GetByIdAsync(new Guid(post.Id.ToString()));
+                if (createdPost == null)
+                    return StatusCode(500, new { message = "Error retrieving created post" });
+                var response = new PostResponse
+                {
+                    Id = createdPost.Id,
+                    Title = createdPost.Title,
+                    Content = createdPost.Content,
+                    Summary = createdPost.Summary,
+                    ImageUrl = createdPost.ImageUrl,
+                    UserId = createdPost.UserId,
+                    UserName = createdPost.User != null ? $"{createdPost.User.FirstName} {createdPost.User.LastName}".Trim() : "",
+                    CategoryId = createdPost.CategoryId,
+                    CategoryName = createdPost.Category != null ? createdPost.Category.Name : null,
+                    Tags = createdPost.Tags,
+                    PublishedAt = createdPost.PublishedAt,
+                    CreatedAt = createdPost.CreatedAt,
+                    UpdatedAt = createdPost.UpdatedAt,
+                    Type = createdPost.Type,
+                    Status = createdPost.Status,
+                    Featured = createdPost.Featured,
+                    AllowComments = createdPost.AllowComments,
+                    ViewCount = createdPost.ViewCount,
+                    LikeCount = createdPost.LikeCount,
+                    ShareCount = createdPost.ShareCount,
+                    ExternalUrl = createdPost.ExternalUrl,
+                    ExternalSource = createdPost.ExternalSource
+                };
+                return CreatedAtAction(nameof(GetPost), new { id = post.Id }, response);
             }
             catch (Exception ex)
             {
@@ -409,7 +349,7 @@ namespace TechBirdsApi.Controllers
         public string Content { get; set; } = string.Empty;
         public string? Summary { get; set; }
         public string? ImageUrl { get; set; }
-        public string UserId { get; set; }
+    public string UserId { get; set; } = string.Empty;
         public string UserName { get; set; } = string.Empty;
         public int? CategoryId { get; set; }
         public string? CategoryName { get; set; }

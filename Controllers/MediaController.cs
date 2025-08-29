@@ -8,6 +8,8 @@ using Microsoft.AspNetCore.Identity;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats.Jpeg;
 using SixLabors.ImageSharp.Processing;
+using TechBirdsApi.Repositories;
+using TechBirdsApi.Services;
 
 namespace TechBirdsApi.Controllers
 {
@@ -16,7 +18,7 @@ namespace TechBirdsApi.Controllers
     [Authorize] // Require auth; restrict specific actions by role below
     public class MediaController : ControllerBase
     {
-        private readonly ApplicationDbContext _db;
+    private readonly IMediaService _mediaService;
         private readonly IWebHostEnvironment _env;
         private readonly UserManager<ApplicationUser> _userManager;
         private static readonly HashSet<string> AllowedImageTypes = new(new[]
@@ -38,20 +40,18 @@ namespace TechBirdsApi.Controllers
         });
         private static readonly HashSet<string> AllowedOctetExtensions = new(new[] { ".zip", ".mp4", ".webm", ".ogg", ".mkv", ".mov", ".pdf" });
 
-        public MediaController(ApplicationDbContext db, IWebHostEnvironment env, UserManager<ApplicationUser> userManager)
+        public MediaController(IMediaService mediaService, IWebHostEnvironment env, UserManager<ApplicationUser> userManager)
         {
-            _db = db;
+            _mediaService = mediaService;
             _env = env;
             _userManager = userManager;
         }
-
-        // POST: api/media/upload - Upload a single file (like WordPress)
-        [HttpPost("upload")]
-        [RequestSizeLimit(104_857_600)] // 100 MB
-        [Authorize(Roles = "Author,Editor,Admin,SuperAdmin")]
+        
+    [HttpPost]
+    [Authorize(Roles = "Author,Editor,Admin,SuperAdmin")]
         public async Task<IActionResult> Upload([FromForm] UploadMediaRequest request)
         {
-            var file = request.File;
+            var file = request.FileUpload;
             if (file == null || file.Length == 0) return BadRequest(new { message = "No file uploaded" });
 
             var contentType = file.ContentType?.ToLowerInvariant() ?? "";
@@ -100,7 +100,6 @@ namespace TechBirdsApi.Controllers
                 Description = request.Description,
                 UploadedByUserId = userId,
             };
-
             // Generate thumbnail for images
             if (mime != null && mime.StartsWith("image/") && !mime.Contains("svg"))
             {
@@ -130,23 +129,8 @@ namespace TechBirdsApi.Controllers
                 }
             }
 
-            _db.MediaItems.Add(media);
-            await _db.SaveChangesAsync();
-
+            await _mediaService.AddAsync(media);
             return Ok(ToDto(media));
-        }
-        public class UploadMediaRequest
-        {
-            [FromForm]
-            public required IFormFile File { get; set; }
-            [FromForm]
-            public string? Title { get; set; }
-            [FromForm]
-            public string? AltText { get; set; }
-            [FromForm]
-            public string? Caption { get; set; }
-            [FromForm]
-            public string? Description { get; set; }
         }
 
         // GET: api/media - List media with filters and pagination
@@ -154,34 +138,25 @@ namespace TechBirdsApi.Controllers
         [Authorize(Roles = "Author,Editor,Admin,SuperAdmin")] // Adjust as needed
         public async Task<IActionResult> List([FromQuery] MediaQuery query)
         {
-            var q = _db.MediaItems.AsNoTracking().Where(m => !m.IsDeleted);
-
+            var items = await _mediaService.GetAllAsync();
+            var filtered = items.Where(m => !m.IsDeleted);
             if (!string.IsNullOrWhiteSpace(query.Search))
-            {
-                q = q.Where(m => m.Title.Contains(query.Search) || (m.Description != null && m.Description.Contains(query.Search)) || m.OriginalFileName.Contains(query.Search));
-            }
+                filtered = filtered.Where(m => m.Title.Contains(query.Search) || (m.Description != null && m.Description.Contains(query.Search)) || m.OriginalFileName.Contains(query.Search));
             if (!string.IsNullOrWhiteSpace(query.MimeType))
-            {
-                q = q.Where(m => m.MimeType.StartsWith(query.MimeType));
-            }
+                filtered = filtered.Where(m => m.MimeType.StartsWith(query.MimeType));
             if (!string.IsNullOrWhiteSpace(query.UploadedByUserId))
+                filtered = filtered.Where(m => m.UploadedByUserId == query.UploadedByUserId);
+            filtered = query.SortBy?.ToLower() switch
             {
-                q = q.Where(m => m.UploadedByUserId == query.UploadedByUserId);
-            }
-
-            q = query.SortBy?.ToLower() switch
-            {
-                "size" => query.SortOrder == "asc" ? q.OrderBy(m => m.Size) : q.OrderByDescending(m => m.Size),
-                "title" => query.SortOrder == "asc" ? q.OrderBy(m => m.Title) : q.OrderByDescending(m => m.Title),
-                _ => query.SortOrder == "asc" ? q.OrderBy(m => m.CreatedAt) : q.OrderByDescending(m => m.CreatedAt)
+                "size" => query.SortOrder == "asc" ? filtered.OrderBy(m => m.Size) : filtered.OrderByDescending(m => m.Size),
+                "title" => query.SortOrder == "asc" ? filtered.OrderBy(m => m.Title) : filtered.OrderByDescending(m => m.Title),
+                _ => query.SortOrder == "asc" ? filtered.OrderBy(m => m.CreatedAt) : filtered.OrderByDescending(m => m.CreatedAt)
             };
-
-            var total = await q.CountAsync();
-            var items = await q.Skip((query.Page - 1) * query.Limit).Take(query.Limit).ToListAsync();
-
+            var total = filtered.Count();
+            var paged = filtered.Skip((query.Page - 1) * query.Limit).Take(query.Limit).ToList();
             return Ok(new
             {
-                items = items.Select(ToDto),
+                items = paged.Select(ToDto),
                 pagination = new { query.Page, query.Limit, total, totalPages = (int)Math.Ceiling(total / (double)query.Limit) }
             });
         }
@@ -191,7 +166,7 @@ namespace TechBirdsApi.Controllers
         [Authorize(Roles = "Author,Editor,Admin,SuperAdmin")]
         public async Task<IActionResult> Get(Guid id)
         {
-            var media = await _db.MediaItems.AsNoTracking().FirstOrDefaultAsync(m => m.Id == id && !m.IsDeleted);
+            var media = await _mediaService.GetByIdAsync(id);
             if (media == null) return NotFound(new { message = "Media not found" });
             return Ok(ToDto(media));
         }
@@ -201,7 +176,7 @@ namespace TechBirdsApi.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> GetFile(Guid id)
         {
-            var media = await _db.MediaItems.AsNoTracking().FirstOrDefaultAsync(m => m.Id == id && !m.IsDeleted);
+            var media = await _mediaService.GetByIdAsync(id);
             if (media == null || string.IsNullOrWhiteSpace(media.StoragePath) || !System.IO.File.Exists(media.StoragePath))
             {
                 return NotFound();
@@ -216,7 +191,7 @@ namespace TechBirdsApi.Controllers
         [AllowAnonymous] // previews can be public; adjust if needed
         public async Task<IActionResult> Thumbnail(Guid id)
         {
-            var media = await _db.MediaItems.AsNoTracking().FirstOrDefaultAsync(m => m.Id == id && !m.IsDeleted);
+            var media = await _mediaService.GetByIdAsync(id);
             if (media == null) return NotFound();
 
             // If we already have a generated thumbnail, serve it
@@ -255,7 +230,7 @@ namespace TechBirdsApi.Controllers
         [Authorize(Roles = "Author,Editor,Admin,SuperAdmin")]
         public async Task<IActionResult> Update(Guid id, [FromBody] UpdateMediaRequest req)
         {
-            var media = await _db.MediaItems.FirstOrDefaultAsync(m => m.Id == id && !m.IsDeleted);
+            var media = await _mediaService.GetByIdAsync(id);
             if (media == null) return NotFound(new { message = "Media not found" });
 
             // Optional: author can edit only their items; admins/editors can edit any
@@ -274,7 +249,7 @@ namespace TechBirdsApi.Controllers
             media.Description = req.Description ?? media.Description;
             media.UpdatedAt = DateTime.UtcNow;
 
-            await _db.SaveChangesAsync();
+            await _mediaService.UpdateAsync(media);
             return Ok(ToDto(media));
         }
 
@@ -283,7 +258,7 @@ namespace TechBirdsApi.Controllers
         [Authorize(Roles = "Author,Editor,Admin,SuperAdmin")]
         public async Task<IActionResult> Delete(Guid id)
         {
-            var media = await _db.MediaItems.FirstOrDefaultAsync(m => m.Id == id && !m.IsDeleted);
+            var media = await _mediaService.GetByIdAsync(id);
             if (media == null) return NotFound(new { message = "Media not found" });
 
             var userId = _userManager.GetUserId(User);
@@ -298,7 +273,7 @@ namespace TechBirdsApi.Controllers
             // Soft delete like WordPress (don't remove file immediately)
             media.IsDeleted = true;
             media.DeletedAt = DateTime.UtcNow;
-            await _db.SaveChangesAsync();
+            await _mediaService.UpdateAsync(media);
 
             return Ok(new { message = "Media moved to trash" });
         }
@@ -308,11 +283,10 @@ namespace TechBirdsApi.Controllers
         [Authorize(Roles = "Admin,SuperAdmin,Editor")]
         public async Task<IActionResult> HardDelete(Guid id)
         {
-            var media = await _db.MediaItems.FirstOrDefaultAsync(m => m.Id == id);
+            var media = await _mediaService.GetByIdAsync(id);
             if (media == null) return NotFound(new { message = "Media not found" });
 
-            _db.MediaItems.Remove(media);
-            await _db.SaveChangesAsync();
+            await _mediaService.DeleteAsync(id);
 
             try
             {
@@ -348,18 +322,34 @@ namespace TechBirdsApi.Controllers
             isDeleted = m.IsDeleted,
             deletedAt = m.DeletedAt
         };
+    }
+}
 
         public class MediaQuery
+{
+    private int _page = 1;
+    private int _limit = 20;
+    public int Page { get => _page; set => _page = value > 0 ? value : 1; }
+    public int Limit { get => _limit; set => _limit = value > 0 && value <= 100 ? value : 20; }
+    public string? Search { get; set; }
+    public string? MimeType { get; set; } // filter by category like image/*
+    public string? UploadedByUserId { get; set; }
+    public string? SortBy { get; set; } = "created"; // created|title|size
+    public string? SortOrder { get; set; } = "desc"; // asc|desc
+}
+
+        public class UploadMediaRequest
         {
-            private int _page = 1;
-            private int _limit = 20;
-            public int Page { get => _page; set => _page = value > 0 ? value : 1; }
-            public int Limit { get => _limit; set => _limit = value > 0 && value <= 100 ? value : 20; }
-            public string? Search { get; set; }
-            public string? MimeType { get; set; } // filter by category like image/*
-            public string? UploadedByUserId { get; set; }
-            public string? SortBy { get; set; } = "created"; // created|title|size
-            public string? SortOrder { get; set; } = "desc"; // asc|desc
+            [FromForm]
+            public IFormFile FileUpload { get; set; } = default!;
+            [FromForm]
+            public string? Title { get; set; }
+            [FromForm]
+            public string? AltText { get; set; }
+            [FromForm]
+            public string? Caption { get; set; }
+            [FromForm]
+            public string? Description { get; set; }
         }
 
         public class UpdateMediaRequest
@@ -369,5 +359,4 @@ namespace TechBirdsApi.Controllers
             public string? Caption { get; set; }
             public string? Description { get; set; }
         }
-    }
-}
+    

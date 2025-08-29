@@ -8,8 +8,19 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using System.Diagnostics;
 using System.Reflection;
+using TechBirdsApi.Repositories;
+using TechBirdsApi.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddScoped<IPageRepository, PageRepository>();
+builder.Services.AddScoped<ISettingsRepository, SettingsRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IPostRepository, PostRepository>();
+builder.Services.AddScoped<IMediaRepository, MediaRepository>();
+builder.Services.AddScoped<IMediaService, MediaService>();
+builder.Services.AddScoped<ICommentRepository, CommentRepository>();
+builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+builder.Services.AddScoped<ICategoryService, CategoryService>();
 
 // Add Entity Framework for Identity
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -46,13 +57,8 @@ builder.Services.AddCors(options =>
     {
         policy.WithOrigins(
             "http://localhost:5173",    // Vite dev server
-            "https://localhost:5173",   // Vite HTTPS
-            "http://localhost:5174",    // Alternative Vite port
-            "https://localhost:5174",   // Alternative Vite HTTPS
-            "http://localhost:5175",    // Another Vite port
-            "http://localhost:5176",    // Current frontend port
-            "http://localhost:3000",    // Alternative port
-            "https://localhost:3000"    // Alternative HTTPS
+            "https://localhost:7106",   // Vite HTTPS
+            "http://localhost:5174"    // Alternative Vite port
         )
         .AllowAnyHeader()
         .AllowAnyMethod()
@@ -60,14 +66,6 @@ builder.Services.AddCors(options =>
         .SetIsOriginAllowed(origin => true); // Allow any origin in development
     });
 });
-
-// Remove Dapper dependencies - using only Entity Framework now
-// builder.Services.AddSingleton<DapperContext>();
-// builder.Services.AddScoped<IArticleRepository, ArticleRepository>();
-// builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
-// builder.Services.AddScoped<IAuthorRepository, AuthorRepository>();
-// builder.Services.AddScoped<ICommentRepository, CommentRepository>();
-// builder.Services.AddScoped<DatabaseInitializer>();
 
 // JWT Authentication
 builder.Services.AddAuthentication(options =>
@@ -138,17 +136,6 @@ using (var scope = app.Services.CreateScope())
         // Log the error (you might want to add proper logging)
         Console.WriteLine($"Error seeding data: {ex.Message}");
     }
-    
-    // Remove DatabaseInitializer - using Entity Framework migrations now
-    // try
-    // {
-    //     var dbInitializer = scope.ServiceProvider.GetRequiredService<DatabaseInitializer>();
-    //     await dbInitializer.InitializeAsync();
-    // }
-    // catch (Exception ex)
-    // {
-    //     Console.WriteLine($"Error initializing database schema: {ex.Message}");
-    // }
 }
 
 // Enable Swagger in all environments

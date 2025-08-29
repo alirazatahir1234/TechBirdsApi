@@ -3,28 +3,29 @@ using Microsoft.AspNetCore.Mvc;
 using TechBirdsApi.Data;
 using TechBirdsApi.Models;
 using TechBirdsApi.Data.Dto;
+using TechBirdsApi.Repositories;
+using TechBirdsApi.Services;
 
 [Authorize(Roles = "Admin,SuperAdmin")]
 [ApiController]
 [Route("api/admin/settings")]
 public class AdminSettingsController : ControllerBase
 {
-    private readonly ApplicationDbContext _db;
-    public AdminSettingsController(ApplicationDbContext db) { _db = db; }
+    private readonly ISettingsService _settingsService;
+    public AdminSettingsController(ISettingsService settingsService) { _settingsService = settingsService; }
 
     [HttpGet]
     public ActionResult<SettingsDto> GetSettings()
     {
-        var settings = _db.Settings.FirstOrDefault();
+    var settings = _settingsService.GetAsync().Result;
         if (settings == null) return NotFound();
         return Ok(new SettingsDto
         {
-            SiteTitle = settings.SiteTitle,
-            SiteDescription = settings.SiteDescription,
-            AdminEmail = settings.AdminEmail,
-            LogoUrl = settings.LogoUrl,
-            DefaultLanguage = settings.DefaultLanguage,
-            Theme = settings.Theme,
+            SiteTitle = settings.SiteTitle ?? string.Empty,
+            SiteDescription = settings.SiteDescription ?? string.Empty,
+            AdminEmail = settings.AdminEmail ?? string.Empty,
+            LogoUrl = settings.LogoUrl ?? string.Empty,
+            DefaultLanguage = settings.DefaultLanguage ?? string.Empty,
             ItemsPerPage = settings.ItemsPerPage,
             EnableRegistration = settings.EnableRegistration,
             MaintenanceMode = settings.MaintenanceMode
@@ -34,22 +35,20 @@ public class AdminSettingsController : ControllerBase
     [HttpPost]
     public ActionResult UpdateSettings([FromBody] SettingsDto dto)
     {
-        var settings = _db.Settings.FirstOrDefault();
+    var settings = _settingsService.GetAsync().Result;
         if (settings == null)
         {
             settings = new Settings();
-            _db.Settings.Add(settings);
         }
         settings.SiteTitle = dto.SiteTitle;
         settings.SiteDescription = dto.SiteDescription;
         settings.AdminEmail = dto.AdminEmail;
         settings.LogoUrl = dto.LogoUrl;
         settings.DefaultLanguage = dto.DefaultLanguage;
-        settings.Theme = dto.Theme;
         settings.ItemsPerPage = dto.ItemsPerPage;
         settings.EnableRegistration = dto.EnableRegistration;
         settings.MaintenanceMode = dto.MaintenanceMode;
-        _db.SaveChanges();
+    _settingsService.UpdateAsync(settings).Wait();
         return Ok();
     }
 
@@ -66,11 +65,11 @@ public class AdminSettingsController : ControllerBase
         {
             await file.CopyToAsync(stream);
         }
-        var settings = _db.Settings.FirstOrDefault();
+    var settings = await _settingsService.GetAsync();
         if (settings != null)
         {
             settings.LogoUrl = $"/uploads/{fileName}";
-            _db.SaveChanges();
+            await _settingsService.UpdateAsync(settings);
         }
         return Ok(new { logoUrl = $"/uploads/{fileName}" });
     }

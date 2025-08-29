@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TechBirdsApi.Data;
 using TechBirdsApi.Models;
+using TechBirdsApi.Repositories;
+using TechBirdsApi.Services;
 
 namespace TechBirdsApi.Controllers
 {
@@ -9,20 +11,24 @@ namespace TechBirdsApi.Controllers
     [Route("api/[controller]")]
     public class CategoriesController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly ICategoryService _categoryService;
 
-        public CategoriesController(ApplicationDbContext context)
+        public CategoriesController(ICategoryService categoryService)
         {
-            _context = context;
+            _categoryService = categoryService;
         }
 
         [HttpGet]
-        public async Task<IActionResult> Get() => Ok(await _context.Categories.ToListAsync());
+        public async Task<IActionResult> Get()
+        {
+            var categories = await _categoryService.GetAllAsync();
+            return Ok(categories);
+        }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> Get(int id)
         {
-            var category = await _context.Categories.FindAsync(id);
+            var category = await _categoryService.GetByIdAsync(id);
             if (category == null) return NotFound();
             return Ok(category);
         }
@@ -30,8 +36,7 @@ namespace TechBirdsApi.Controllers
         [HttpPost]
         public async Task<IActionResult> Post(Category category)
         {
-            _context.Categories.Add(category);
-            await _context.SaveChangesAsync();
+            await _categoryService.AddAsync(category);
             return CreatedAtAction(nameof(Get), new { id = category.Id }, category);
         }
 
@@ -39,18 +44,16 @@ namespace TechBirdsApi.Controllers
         public async Task<IActionResult> Put(int id, Category category)
         {
             if (id != category.Id) return BadRequest();
-            _context.Categories.Update(category);
-            await _context.SaveChangesAsync();
+            await _categoryService.UpdateAsync(category);
             return NoContent();
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var category = await _context.Categories.FindAsync(id);
+            var category = await _categoryService.GetByIdAsync(id);
             if (category == null) return NotFound();
-            _context.Categories.Remove(category);
-            await _context.SaveChangesAsync();
+            await _categoryService.DeleteAsync(id);
             return NoContent();
         }
     }

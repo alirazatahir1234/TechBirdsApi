@@ -39,7 +39,7 @@ namespace TechBirdsApi.Controllers
                         Id = c.Id,
                         Content = c.Content,
                         Author = c.User != null ? c.User.Name : "Unknown",
-                        AuthorEmail = c.User != null ? c.User.Email : "",
+                        AuthorEmail = c.User != null && c.User.Email != null ? c.User.Email : "",
                         PostId = c.ArticleId ?? c.PostId ?? 0,
                         Status = c.IsApproved ? "Approved" : "Pending",
                         CreatedAt = c.CreatedAt,

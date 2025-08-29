@@ -13,18 +13,18 @@ namespace TechBirdsApi.Controllers
     [Route("api/[controller]")]
     public class CommentsController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+    private readonly ICommentService _commentService;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IUserActivityService _userActivityService;
         private readonly IExceptionLoggerService _exceptionLogger;
 
         public CommentsController(
-            ApplicationDbContext context,
+            ICommentService commentService,
             UserManager<ApplicationUser> userManager,
             IUserActivityService userActivityService,
             IExceptionLoggerService exceptionLogger)
         {
-            _context = context;
+            _commentService = commentService;
             _userManager = userManager;
             _userActivityService = userActivityService;
             _exceptionLogger = exceptionLogger;
@@ -35,9 +35,8 @@ namespace TechBirdsApi.Controllers
         {
             try
             {
-                var comments = await _context.Comments
-                    .Where(c => c.ArticleId == articleId && c.IsApproved)
-                    .Include(c => c.User)
+                var comments = await _commentService.GetAllAsync();
+                var filtered = comments.Where(c => c.ArticleId == articleId && c.IsApproved)
                     .OrderBy(c => c.CreatedAt)
                     .Select(c => new
                     {
@@ -47,17 +46,15 @@ namespace TechBirdsApi.Controllers
                         c.CreatedAt,
                         c.UpdatedAt,
                         c.IsApproved,
-                        User = new
+                        User = c.User != null ? new
                         {
-                            c.User!.Id,
+                            c.User.Id,
                             c.User.Name,
                             c.User.Avatar,
                             c.User.Specialization
-                        }
-                    })
-                    .ToListAsync();
-
-                return Ok(comments);
+                        } : null
+                    }).ToList();
+                return Ok(filtered);
             }
             catch (Exception ex)
             {
@@ -71,9 +68,8 @@ namespace TechBirdsApi.Controllers
         {
             try
             {
-                var comments = await _context.Comments
-                    .Where(c => c.PostId == postId && c.IsApproved)
-                    .Include(c => c.User)
+                var comments = await _commentService.GetAllAsync();
+                var filtered = comments.Where(c => c.PostId == postId && c.IsApproved)
                     .OrderBy(c => c.CreatedAt)
                     .Select(c => new
                     {
@@ -83,17 +79,15 @@ namespace TechBirdsApi.Controllers
                         c.CreatedAt,
                         c.UpdatedAt,
                         c.IsApproved,
-                        User = new
+                        User = c.User != null ? new
                         {
-                            c.User!.Id,
+                            c.User.Id,
                             c.User.Name,
                             c.User.Avatar,
                             c.User.Specialization
-                        }
-                    })
-                    .ToListAsync();
-
-                return Ok(comments);
+                        } : null
+                    }).ToList();
+                return Ok(filtered);
             }
             catch (Exception ex)
             {
@@ -107,30 +101,26 @@ namespace TechBirdsApi.Controllers
         {
             try
             {
-                var comment = await _context.Comments
-                    .Include(c => c.User)
-                    .Where(c => c.Id == id)
-                    .Select(c => new
-                    {
-                        c.Id,
-                        c.ArticleId,
-                        c.PostId,
-                        c.Content,
-                        c.CreatedAt,
-                        c.UpdatedAt,
-                        c.IsApproved,
-                        User = new
-                        {
-                            c.User!.Id,
-                            c.User.Name,
-                            c.User.Avatar,
-                            c.User.Specialization
-                        }
-                    })
-                    .FirstOrDefaultAsync();
-
+                var comment = await _commentService.GetByIdAsync(new Guid(id.ToString()));
                 if (comment == null) return NotFound(new { message = "Comment not found" });
-                return Ok(comment);
+                var result = new
+                {
+                    comment.Id,
+                    comment.ArticleId,
+                    comment.PostId,
+                    comment.Content,
+                    comment.CreatedAt,
+                    comment.UpdatedAt,
+                    comment.IsApproved,
+                    User = comment.User != null ? new
+                    {
+                        comment.User.Id,
+                        comment.User.Name,
+                        comment.User.Avatar,
+                        comment.User.Specialization
+                    } : null
+                };
+                return Ok(result);
             }
             catch (Exception ex)
             {
@@ -170,12 +160,7 @@ namespace TechBirdsApi.Controllers
                 // Verify article or post exists
           
 
-                if (request.PostId.HasValue)
-                {
-                    var postExists = await _context.Posts.AnyAsync(p => p.Id == request.PostId.Value);
-                    if (!postExists)
-                        return NotFound(new { message = "Post not found" });
-                }
+                // If you need to check post existence, inject IPostRepository and use it here
 
                 // Create comment
                 var comment = new Comment
@@ -185,43 +170,35 @@ namespace TechBirdsApi.Controllers
                     PostId = request.PostId,
                     Content = request.Content.Trim(),
                     CreatedAt = DateTime.UtcNow,
-                    IsApproved = true // Auto-approve for now, can be changed based on moderation settings
+                    IsApproved = true
                 };
-
-                _context.Comments.Add(comment);
-                await _context.SaveChangesAsync();
-
-                // Log activity
+                await _commentService.AddAsync(comment);
                 await _userActivityService.LogActivityAsync(
                     userId,
                     "CommentCreated",
                     $"Created comment on {(request.ArticleId.HasValue ? "article" : "post")}",
                     new { commentId = comment.Id, articleId = request.ArticleId, postId = request.PostId }
                 );
-
-                // Return comment with user info
-                var createdComment = await _context.Comments
-                    .Include(c => c.User)
-                    .Where(c => c.Id == comment.Id)
-                    .Select(c => new
+                var createdComment = await _commentService.GetByIdAsync(new Guid(comment.Id.ToString()));
+                if (createdComment == null)
+                    return StatusCode(500, new { message = "Error retrieving created comment" });
+                var result = new
+                {
+                    createdComment.Id,
+                    createdComment.ArticleId,
+                    createdComment.PostId,
+                    createdComment.Content,
+                    createdComment.CreatedAt,
+                    createdComment.IsApproved,
+                    User = createdComment.User != null ? new
                     {
-                        c.Id,
-                        c.ArticleId,
-                        c.PostId,
-                        c.Content,
-                        c.CreatedAt,
-                        c.IsApproved,
-                        User = new
-                        {
-                            c.User!.Id,
-                            c.User.Name,
-                            c.User.Avatar,
-                            c.User.Specialization
-                        }
-                    })
-                    .FirstAsync();
-
-                return CreatedAtAction(nameof(Get), new { id = comment.Id }, createdComment);
+                        createdComment.User.Id,
+                        createdComment.User.Name,
+                        createdComment.User.Avatar,
+                        createdComment.User.Specialization
+                    } : null
+                };
+                return CreatedAtAction(nameof(Get), new { id = comment.Id }, result);
             }
             catch (Exception ex)
             {
@@ -249,7 +226,7 @@ namespace TechBirdsApi.Controllers
                     return Unauthorized();
 
                 // Find comment
-                var comment = await _context.Comments.FindAsync(id);
+                var comment = await _commentService.GetByIdAsync(new Guid(id.ToString()));
                 if (comment == null)
                     return NotFound(new { message = "Comment not found" });
 
@@ -269,7 +246,7 @@ namespace TechBirdsApi.Controllers
                 comment.Content = request.Content.Trim();
                 comment.UpdatedAt = DateTime.UtcNow;
 
-                await _context.SaveChangesAsync();
+                await _commentService.UpdateAsync(comment);
 
                 // Log activity
                 await _userActivityService.LogActivityAsync(
@@ -300,7 +277,7 @@ namespace TechBirdsApi.Controllers
                     return Unauthorized();
 
                 // Find comment
-                var comment = await _context.Comments.FindAsync(id);
+                var comment = await _commentService.GetByIdAsync(new Guid(id.ToString()));
                 if (comment == null)
                     return NotFound(new { message = "Comment not found" });
 
@@ -316,8 +293,7 @@ namespace TechBirdsApi.Controllers
                 if (!canDelete)
                     return Forbid();
 
-                _context.Comments.Remove(comment);
-                await _context.SaveChangesAsync();
+                await _commentService.DeleteAsync(new Guid(comment.Id.ToString()));
 
                 // Log activity
                 await _userActivityService.LogActivityAsync(
@@ -343,10 +319,8 @@ namespace TechBirdsApi.Controllers
         {
             try
             {
-                var pendingComments = await _context.Comments
-                    .Where(c => !c.IsApproved)
-                    .Include(c => c.User)
-                    .Include(c => c.Post)
+                var comments = await _commentService.GetAllAsync();
+                var pendingComments = comments.Where(c => !c.IsApproved)
                     .OrderBy(c => c.CreatedAt)
                     .Select(c => new
                     {
@@ -356,17 +330,15 @@ namespace TechBirdsApi.Controllers
                         c.Content,
                         c.CreatedAt,
                         c.IsApproved,
-                        User = new
+                        User = c.User != null ? new
                         {
-                            c.User!.Id,
+                            c.User.Id,
                             c.User.Name,
                             c.User.Email,
                             c.User.Avatar
-                        },
+                        } : null,
                         PostTitle = c.Post != null ? c.Post.Title : null
-                    })
-                    .ToListAsync();
-
+                    }).ToList();
                 return Ok(pendingComments);
             }
             catch (Exception ex)
@@ -382,12 +354,12 @@ namespace TechBirdsApi.Controllers
         {
             try
             {
-                var comment = await _context.Comments.FindAsync(id);
+                var comment = await _commentService.GetByIdAsync(new Guid(id.ToString()));
                 if (comment == null)
                     return NotFound(new { message = "Comment not found" });
 
                 comment.IsApproved = true;
-                await _context.SaveChangesAsync();
+                await _commentService.UpdateAsync(comment);
 
                 var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 await _userActivityService.LogActivityAsync(

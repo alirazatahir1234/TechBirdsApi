@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using TechBirdsApi.Models;
 using TechBirdsApi.Extension;
 using TechBirdsApi.Services;
+using TechBirdsApi.Dto;
 
 namespace TechBirdsApi.Controllers
 {
@@ -249,65 +250,5 @@ namespace TechBirdsApi.Controllers
         }
     }
 
-    // Request/Response DTOs
-    public class AdminLoginRequest
-    {
-        public string Email { get; set; } = string.Empty;
-        public string Password { get; set; } = string.Empty;
-    }
 
-    public class AdminRegisterRequest
-    {
-        public string FirstName { get; set; } = string.Empty;
-        public string LastName { get; set; } = string.Empty;
-        public string Email { get; set; } = string.Empty;
-        public string Password { get; set; } = string.Empty;
-        
-        // Optional Profile Fields
-        public string? Bio { get; set; }
-        public string? Avatar { get; set; } // base64 string from frontend
-        public string? Website { get; set; }
-        public string? Twitter { get; set; }
-        public string? LinkedIn { get; set; }
-        public string? Specialization { get; set; }
-        
-        // Role Assignment (defaults to Admin if not specified)
-        public string? Role { get; set; }
-        public bool? IsActive { get; set; } // Additional field from frontend
-    }
-
-    public class AdminUserResponse
-    {
-        public string Id { get; set; } = string.Empty; // Keep as string for GUID
-        public string FirstName { get; set; } = string.Empty;
-        public string LastName { get; set; } = string.Empty;
-        public string Name { get; set; } = string.Empty;
-        public string Email { get; set; } = string.Empty;
-        public string Role { get; set; } = string.Empty;
-        public string Bio { get; set; } = string.Empty;
-        
-        // Profile & Media
-        public string? Avatar { get; set; } // base64 string for frontend
-        public string? Website { get; set; }
-        public string? Twitter { get; set; }
-        public string? LinkedIn { get; set; }
-        public string? Specialization { get; set; }
-        
-        // Content Creator Stats
-        public int ArticleCount { get; set; }
-        public int PostsCount { get; set; }
-        public int TotalViews { get; set; }
-        
-        // Timestamps
-        public DateTime CreatedAt { get; set; }
-        public DateTime JoinedAt { get; set; }
-        public DateTime? LastActive { get; set; }
-    }
-
-    public class AuthResponse
-    {
-        public AdminUserResponse User { get; set; } = new();
-        public string Token { get; set; } = string.Empty;
-        public DateTime ExpiresAt { get; set; }
-    }
 }
