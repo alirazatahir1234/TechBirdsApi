@@ -6,7 +6,7 @@ namespace TechBirdsApi.Interfaces
 {
     public interface IUserRepository
     {
-        Task<IEnumerable<ApplicationUser>> GetAllAsync();
+    IQueryable<ApplicationUser> GetAll();
         Task<ApplicationUser?> GetByIdAsync(string id);
         Task AddAsync(ApplicationUser user);
         Task UpdateAsync(ApplicationUser user);

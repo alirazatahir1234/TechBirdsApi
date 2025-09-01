@@ -6,7 +6,7 @@ namespace TechBirdsApi.Services
 {
     public interface IUserService
     {
-        Task<IEnumerable<ApplicationUser>> GetAllAsync();
+    IQueryable<ApplicationUser> GetAll();
         Task<ApplicationUser?> GetByIdAsync(string id);
         Task AddAsync(ApplicationUser user);
         Task UpdateAsync(ApplicationUser user);

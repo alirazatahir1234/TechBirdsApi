@@ -15,9 +15,9 @@ namespace TechBirdsApi.Repositories
             _context = context;
         }
 
-        public async Task<IEnumerable<ApplicationUser>> GetAllAsync()
+        public IQueryable<ApplicationUser> GetAll()
         {
-            return await _context.Users.ToListAsync();
+            return _context.Users.AsQueryable();
         }
 
         public async Task<ApplicationUser?> GetByIdAsync(string id)

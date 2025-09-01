@@ -21,6 +21,7 @@ builder.Services.AddScoped<IMediaService, MediaService>();
 builder.Services.AddScoped<ICommentRepository, CommentRepository>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
+builder.Services.AddScoped<IUserService, UserService>();
 
 // Add Entity Framework for Identity
 builder.Services.AddDbContext<ApplicationDbContext>(options =>

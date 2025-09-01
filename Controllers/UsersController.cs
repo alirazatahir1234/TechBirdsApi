@@ -39,13 +39,12 @@ namespace TechBirdsApi.Controllers
         {
             try
             {
-                var usersList = await _userService.GetAllAsync();
-                var query = usersList.AsQueryable();
-                
+                var query = _userService.GetAll();
+
                 // Apply filters
                 if (!string.IsNullOrEmpty(parameters.Search))
                 {
-                    query = query.Where(u => 
+                    query = query.Where(u =>
                         u.Name.Contains(parameters.Search) ||
                         u.FirstName.Contains(parameters.Search) ||
                         u.LastName.Contains(parameters.Search) ||
@@ -143,7 +142,6 @@ namespace TechBirdsApi.Controllers
             {
                 // 🔐 Log exception with context
                 await _exceptionLogger.LogExceptionAsync(ex, HttpContext, "UsersController.GetUsers", null, "UserManagement");
-                
                 // 🔒 SECURITY: Don't expose internal error details
                 return StatusCode(500, new { message = "Error retrieving users" });
             }

@@ -14,9 +14,9 @@ namespace TechBirdsApi.Services
             _userRepository = userRepository;
         }
 
-        public async Task<IEnumerable<ApplicationUser>> GetAllAsync()
+        public IQueryable<ApplicationUser> GetAll()
         {
-            return await _userRepository.GetAllAsync();
+            return _userRepository.GetAll();
         }
 
         public async Task<ApplicationUser?> GetByIdAsync(string id)
