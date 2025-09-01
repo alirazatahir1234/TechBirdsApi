@@ -15,7 +15,6 @@ namespace TechBirdsApi.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize] // Require auth; restrict specific actions by role below
     public class MediaController : ControllerBase
     {
     private readonly IMediaService _mediaService;
@@ -48,7 +47,7 @@ namespace TechBirdsApi.Controllers
         }
         
     [HttpPost]
-    [Authorize(Roles = "Author,Editor,Admin,SuperAdmin")]
+    // [Authorize(Roles = "Author,Editor,Admin,SuperAdmin")]
         public async Task<IActionResult> Upload([FromForm] UploadMediaRequest request)
         {
             var file = request.FileUpload;

@@ -155,14 +155,11 @@ namespace TechBirdsApi.Controllers
         {
             try
             {
-                // � DEBUG: Log the incoming request
-                Console.WriteLine($"[DEBUG] CreateUser called with: {System.Text.Json.JsonSerializer.Serialize(request)}");
-                
+            
                 // �🔒 SECURITY: Only admins can create users
                 var currentUserId = _userManager.GetUserId(User);
                 if (currentUserId == null)
                 {
-                    Console.WriteLine($"[DEBUG] Unauthorized - currentUserId is null");
                     return Unauthorized();
                 }
 

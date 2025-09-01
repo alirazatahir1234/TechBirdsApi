@@ -152,8 +152,6 @@ namespace TechBirdsApi.Services
             }
             catch
             {
-                // If we can't log to database, at least log to console/file
-                Console.WriteLine($"Failed to log exception: {ex.Message}");
             }
         }
     }

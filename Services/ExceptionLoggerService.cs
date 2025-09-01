@@ -76,9 +76,6 @@ namespace TechBirdsApi.Services
             }
             catch (Exception logEx)
             {
-                // Fallback logging to console if database logging fails
-                Console.WriteLine($"Failed to log exception to database: {logEx.Message}");
-                Console.WriteLine($"Original exception: {ex.Message}");
             }
         }
 

@@ -134,8 +134,6 @@ using (var scope = app.Services.CreateScope())
     }
     catch (Exception ex)
     {
-        // Log the error (you might want to add proper logging)
-        Console.WriteLine($"Error seeding data: {ex.Message}");
     }
 }
 
