@@ -22,13 +22,17 @@ namespace TechBirdsApi.Data
         public DbSet<UserActivity> UserActivities { get; set; }
         public DbSet<TechBirdsApi.Models.SystemException> SystemExceptions { get; set; }
 
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            base.OnConfiguring(optionsBuilder);
+            // No special configuration needed - use default Pascal case naming
+        }
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
             
             // Configure table names to match existing database
-          
- 
             builder.Entity<Post>().ToTable("posts");
             builder.Entity<Category>().ToTable("categories");
             builder.Entity<Comment>().ToTable("comments");
@@ -45,32 +49,9 @@ namespace TechBirdsApi.Data
                 entity.Property(e => e.Specialization).HasMaxLength(200);
             });
             
-            
-            // Configure Post entity
+            // Configure Post entity relationships
             builder.Entity<Post>(entity =>
             {
-                entity.HasKey(e => e.Id);
-                entity.Property(e => e.Id).HasColumnName("id");
-                entity.Property(e => e.Title).HasColumnName("title");
-                entity.Property(e => e.Content).HasColumnName("content");
-                entity.Property(e => e.Summary).HasColumnName("summary");
-                entity.Property(e => e.ImageUrl).HasColumnName("imageurl");
-                entity.Property(e => e.UserId).HasColumnName("userid").IsRequired();
-                entity.Property(e => e.CategoryId).HasColumnName("categoryid");
-                entity.Property(e => e.Tags).HasColumnName("tags");
-                entity.Property(e => e.PublishedAt).HasColumnName("publishedat");
-                entity.Property(e => e.CreatedAt).HasColumnName("createdat");
-                entity.Property(e => e.UpdatedAt).HasColumnName("updatedat");
-                entity.Property(e => e.Type).HasColumnName("type");
-                entity.Property(e => e.Status).HasColumnName("status");
-                entity.Property(e => e.Featured).HasColumnName("featured");
-                entity.Property(e => e.AllowComments).HasColumnName("allowcomments");
-                entity.Property(e => e.ViewCount).HasColumnName("viewcount");
-                entity.Property(e => e.LikeCount).HasColumnName("likecount");
-                entity.Property(e => e.ShareCount).HasColumnName("sharecount");
-                entity.Property(e => e.ExternalUrl).HasColumnName("externalurl");
-                entity.Property(e => e.ExternalSource).HasColumnName("externalsource");
-                
                 // Foreign key relationships
                 entity.HasOne(p => p.User)
                       .WithMany(u => u.Posts)

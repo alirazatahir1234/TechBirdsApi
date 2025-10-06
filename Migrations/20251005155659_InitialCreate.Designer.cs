@@ -12,15 +12,15 @@ using TechBirdsApi.Data;
 namespace TechBirdsApi.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250824152215_AddSettingsTable")]
-    partial class AddSettingsTable
+    [Migration("20251005155659_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.7")
+                .HasAnnotation("ProductVersion", "9.0.0")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -611,91 +611,71 @@ namespace TechBirdsApi.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("id");
+                        .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<bool>("AllowComments")
-                        .HasColumnType("boolean")
-                        .HasColumnName("allowcomments");
+                        .HasColumnType("boolean");
 
                     b.Property<int?>("CategoryId")
-                        .HasColumnType("integer")
-                        .HasColumnName("categoryid");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Content")
                         .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("content");
+                        .HasColumnType("text");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("createdat");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("ExternalSource")
-                        .HasColumnType("text")
-                        .HasColumnName("externalsource");
+                        .HasColumnType("text");
 
                     b.Property<string>("ExternalUrl")
-                        .HasColumnType("text")
-                        .HasColumnName("externalurl");
+                        .HasColumnType("text");
 
                     b.Property<bool>("Featured")
-                        .HasColumnType("boolean")
-                        .HasColumnName("featured");
+                        .HasColumnType("boolean");
 
                     b.Property<string>("ImageUrl")
-                        .HasColumnType("text")
-                        .HasColumnName("imageurl");
+                        .HasColumnType("text");
 
                     b.Property<int>("LikeCount")
-                        .HasColumnType("integer")
-                        .HasColumnName("likecount");
+                        .HasColumnType("integer");
 
                     b.Property<DateTime?>("PublishedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("publishedat");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("ShareCount")
-                        .HasColumnType("integer")
-                        .HasColumnName("sharecount");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Status")
                         .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("status");
+                        .HasColumnType("text");
 
                     b.Property<string>("Summary")
-                        .HasColumnType("text")
-                        .HasColumnName("summary");
+                        .HasColumnType("text");
 
                     b.Property<string>("Tags")
-                        .HasColumnType("text")
-                        .HasColumnName("tags");
+                        .HasColumnType("text");
 
                     b.Property<string>("Title")
                         .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("title");
+                        .HasColumnType("text");
 
                     b.Property<string>("Type")
                         .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("type");
+                        .HasColumnType("text");
 
                     b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("updatedat");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("UserId")
                         .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("userid");
+                        .HasColumnType("text");
 
                     b.Property<int>("ViewCount")
-                        .HasColumnType("integer")
-                        .HasColumnName("viewcount");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -715,11 +695,9 @@ namespace TechBirdsApi.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("AdminEmail")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("DefaultLanguage")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<bool>("EnableRegistration")
@@ -729,22 +707,18 @@ namespace TechBirdsApi.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("LogoUrl")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<bool>("MaintenanceMode")
                         .HasColumnType("boolean");
 
                     b.Property<string>("SiteDescription")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("SiteTitle")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("Theme")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.HasKey("Id");

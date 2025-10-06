@@ -9,7 +9,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace TechBirdsApi.Migrations
 {
     /// <inheritdoc />
-    public partial class AddSettingsTable : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -88,12 +88,12 @@ namespace TechBirdsApi.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    SiteTitle = table.Column<string>(type: "text", nullable: false),
-                    SiteDescription = table.Column<string>(type: "text", nullable: false),
-                    AdminEmail = table.Column<string>(type: "text", nullable: false),
-                    LogoUrl = table.Column<string>(type: "text", nullable: false),
-                    DefaultLanguage = table.Column<string>(type: "text", nullable: false),
-                    Theme = table.Column<string>(type: "text", nullable: false),
+                    SiteTitle = table.Column<string>(type: "text", nullable: true),
+                    SiteDescription = table.Column<string>(type: "text", nullable: true),
+                    AdminEmail = table.Column<string>(type: "text", nullable: true),
+                    LogoUrl = table.Column<string>(type: "text", nullable: true),
+                    DefaultLanguage = table.Column<string>(type: "text", nullable: true),
+                    Theme = table.Column<string>(type: "text", nullable: true),
                     ItemsPerPage = table.Column<int>(type: "integer", nullable: false),
                     EnableRegistration = table.Column<bool>(type: "boolean", nullable: false),
                     MaintenanceMode = table.Column<bool>(type: "boolean", nullable: false)
@@ -320,40 +320,40 @@ namespace TechBirdsApi.Migrations
                 name: "posts",
                 columns: table => new
                 {
-                    id = table.Column<int>(type: "integer", nullable: false)
+                    Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    title = table.Column<string>(type: "text", nullable: false),
-                    content = table.Column<string>(type: "text", nullable: false),
-                    summary = table.Column<string>(type: "text", nullable: true),
-                    imageurl = table.Column<string>(type: "text", nullable: true),
-                    userid = table.Column<string>(type: "text", nullable: false),
-                    categoryid = table.Column<int>(type: "integer", nullable: true),
-                    tags = table.Column<string>(type: "text", nullable: true),
-                    publishedat = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    createdat = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    updatedat = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    type = table.Column<string>(type: "text", nullable: false),
-                    status = table.Column<string>(type: "text", nullable: false),
-                    featured = table.Column<bool>(type: "boolean", nullable: false),
-                    allowcomments = table.Column<bool>(type: "boolean", nullable: false),
-                    viewcount = table.Column<int>(type: "integer", nullable: false),
-                    likecount = table.Column<int>(type: "integer", nullable: false),
-                    sharecount = table.Column<int>(type: "integer", nullable: false),
-                    externalurl = table.Column<string>(type: "text", nullable: true),
-                    externalsource = table.Column<string>(type: "text", nullable: true)
+                    Title = table.Column<string>(type: "text", nullable: false),
+                    Content = table.Column<string>(type: "text", nullable: false),
+                    Summary = table.Column<string>(type: "text", nullable: true),
+                    ImageUrl = table.Column<string>(type: "text", nullable: true),
+                    UserId = table.Column<string>(type: "text", nullable: false),
+                    CategoryId = table.Column<int>(type: "integer", nullable: true),
+                    Tags = table.Column<string>(type: "text", nullable: true),
+                    PublishedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    Type = table.Column<string>(type: "text", nullable: false),
+                    Status = table.Column<string>(type: "text", nullable: false),
+                    Featured = table.Column<bool>(type: "boolean", nullable: false),
+                    AllowComments = table.Column<bool>(type: "boolean", nullable: false),
+                    ViewCount = table.Column<int>(type: "integer", nullable: false),
+                    LikeCount = table.Column<int>(type: "integer", nullable: false),
+                    ShareCount = table.Column<int>(type: "integer", nullable: false),
+                    ExternalUrl = table.Column<string>(type: "text", nullable: true),
+                    ExternalSource = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_posts", x => x.id);
+                    table.PrimaryKey("PK_posts", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_posts_AspNetUsers_userid",
-                        column: x => x.userid,
+                        name: "FK_posts_AspNetUsers_UserId",
+                        column: x => x.UserId,
                         principalTable: "AspNetUsers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_posts_categories_categoryid",
-                        column: x => x.categoryid,
+                        name: "FK_posts_categories_CategoryId",
+                        column: x => x.CategoryId,
                         principalTable: "categories",
                         principalColumn: "Id");
                 });
@@ -432,7 +432,7 @@ namespace TechBirdsApi.Migrations
                         name: "FK_comments_posts_PostId",
                         column: x => x.PostId,
                         principalTable: "posts",
-                        principalColumn: "id");
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -594,14 +594,14 @@ namespace TechBirdsApi.Migrations
                 column: "UpdatedAt");
 
             migrationBuilder.CreateIndex(
-                name: "IX_posts_categoryid",
+                name: "IX_posts_CategoryId",
                 table: "posts",
-                column: "categoryid");
+                column: "CategoryId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_posts_userid",
+                name: "IX_posts_UserId",
                 table: "posts",
-                column: "userid");
+                column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_SystemExceptions_CreatedAt",

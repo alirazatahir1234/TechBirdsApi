@@ -22,6 +22,11 @@ builder.Services.AddScoped<ICommentRepository, CommentRepository>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IPostService, PostService>();
+builder.Services.AddScoped<IPageService, PageService>();
+builder.Services.AddScoped<ISettingsService, SettingsService>();
+builder.Services.AddScoped<ICommentService, CommentService>();
+builder.Services.AddScoped<INewsletterService, NewsletterService>();
 
 // Add Entity Framework for Identity
 builder.Services.AddDbContext<ApplicationDbContext>(options =>

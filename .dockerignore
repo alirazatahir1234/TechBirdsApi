@@ -1,0 +1,18 @@
+# .dockerignore for .NET API
+**/bin
+**/obj
+**/out
+**/.vs
+**/.vscode
+**/node_modules
+**/.git
+**/.gitignore
+**/README.md
+**/Dockerfile*
+**/docker-compose*
+**/.dockerignore
+**/uploads/*
+!uploads/.gitkeep
+**/*.md
+**/appsettings.Development.json
+**/Properties/launchSettings.json
